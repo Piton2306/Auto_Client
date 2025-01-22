@@ -1,8 +1,9 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="ru">
 <head>
     <meta charset="UTF-8">
     <title>Создание клиентов и договоров</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             // Загрузка сохраненных параметров из localStorage
@@ -51,21 +52,21 @@
 </head>
 <body>
     <h1>Создание клиентов и договоров</h1>
-    <p><strong>Schema Name:</strong> <span id="displaySchemaName">{{ schemaName }}</span></p>
-    <p><strong>Server Name:</strong> <span id="displayServerName">{{ serverName }}</span></p>
-    <p><strong>ID Group Card:</strong> <span id="displayIdGroupCard">{{ id_group_card }}</span></p>
-    <p><strong>Agree Type:</strong> <span id="displayAgreeType">{{ AgreeType }}</span></p>
+    <p><strong>Имя схемы:</strong> <span id="displaySchemaName">{{ schemaName }}</span></p>
+    <p><strong>Имя сервера:</strong> <span id="displayServerName">{{ serverName }}</span></p>
+    <p><strong>ID группы карт:</strong> <span id="displayIdGroupCard">{{ id_group_card }}</span></p>
+    <p><strong>Тип соглашения:</strong> <span id="displayAgreeType">{{ AgreeType }}</span></p>
     <form onsubmit="event.preventDefault(); updateConfig();">
-        <label for="schemaName">Schema Name:</label>
-        <input type="text" id="schemaName" name="schemaName" value="{{ schemaName }}" required><br>
-        <label for="password">Password:</label>
-        <input type="password" id="password" name="password" value="{{ password }}" required><br>
-        <label for="serverName">Server Name:</label>
-        <input type="text" id="serverName" name="serverName" value="{{ serverName }}" required><br>
-        <label for="id_group_card">ID Group Card:</label>
-        <input type="text" id="id_group_card" name="id_group_card" value="{{ id_group_card }}" required><br>
-        <label for="AgreeType">Agree Type:</label>
-        <input type="text" id="AgreeType" name="AgreeType" value="{{ AgreeType }}" required><br>
+        <label for="schemaName">Имя схемы:</label>
+        <input type="text" id="schemaName" name="schemaName" value="{{ schemaName }}" required>
+        <label for="password">Пароль:</label>
+        <input type="password" id="password" name="password" value="{{ password }}" required>
+        <label for="serverName">Имя сервера:</label>
+        <input type="text" id="serverName" name="serverName" value="{{ serverName }}" required>
+        <label for="id_group_card">ID группы карт:</label>
+        <input type="text" id="id_group_card" name="id_group_card" value="{{ id_group_card }}" required>
+        <label for="AgreeType">Тип соглашения:</label>
+        <input type="text" id="AgreeType" name="AgreeType" value="{{ AgreeType }}" required>
         <button type="submit">Сохранить</button>
     </form>
     <form action="/create_client" method="post">
