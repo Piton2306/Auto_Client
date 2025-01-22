@@ -1,0 +1,81 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Создание клиентов и договоров</title>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            // Загрузка сохраненных параметров из localStorage
+            document.getElementById('schemaName').value = localStorage.getItem('schemaName') || '{{ schemaName }}';
+            document.getElementById('password').value = localStorage.getItem('password') || '{{ password }}';
+            document.getElementById('serverName').value = localStorage.getItem('serverName') || '{{ serverName }}';
+            document.getElementById('id_group_card').value = localStorage.getItem('id_group_card') || '{{ id_group_card }}';
+            document.getElementById('AgreeType').value = localStorage.getItem('AgreeType') || '{{ AgreeType }}';
+
+            // Обновление отображаемых параметров
+            document.getElementById('displaySchemaName').innerText = localStorage.getItem('schemaName') || '{{ schemaName }}';
+            document.getElementById('displayServerName').innerText = localStorage.getItem('serverName') || '{{ serverName }}';
+            document.getElementById('displayIdGroupCard').innerText = localStorage.getItem('id_group_card') || '{{ id_group_card }}';
+            document.getElementById('displayAgreeType').innerText = localStorage.getItem('AgreeType') || '{{ AgreeType }}';
+        });
+
+        function updateConfig() {
+            // Сохранение параметров в localStorage
+            var schemaName = document.getElementById('schemaName').value;
+            var password = document.getElementById('password').value;
+            var serverName = document.getElementById('serverName').value;
+            var id_group_card = document.getElementById('id_group_card').value;
+            var AgreeType = document.getElementById('AgreeType').value;
+
+            localStorage.setItem('schemaName', schemaName);
+            localStorage.setItem('password', password);
+            localStorage.setItem('serverName', serverName);
+            localStorage.setItem('id_group_card', id_group_card);
+            localStorage.setItem('AgreeType', AgreeType);
+
+            // Обновление отображаемых параметров
+            document.getElementById('displaySchemaName').innerText = schemaName;
+            document.getElementById('displayServerName').innerText = serverName;
+            document.getElementById('displayIdGroupCard').innerText = id_group_card;
+            document.getElementById('displayAgreeType').innerText = AgreeType;
+
+            alert('Параметры подключения успешно обновлены на клиенте.');
+
+            // Логирование для проверки
+            console.log('Schema Name:', schemaName);
+            console.log('Server Name:', serverName);
+            console.log('ID Group Card:', id_group_card);
+            console.log('Agree Type:', AgreeType);
+        }
+    </script>
+</head>
+<body>
+    <h1>Создание клиентов и договоров</h1>
+    <p><strong>Schema Name:</strong> <span id="displaySchemaName">{{ schemaName }}</span></p>
+    <p><strong>Server Name:</strong> <span id="displayServerName">{{ serverName }}</span></p>
+    <p><strong>ID Group Card:</strong> <span id="displayIdGroupCard">{{ id_group_card }}</span></p>
+    <p><strong>Agree Type:</strong> <span id="displayAgreeType">{{ AgreeType }}</span></p>
+    <form onsubmit="event.preventDefault(); updateConfig();">
+        <label for="schemaName">Schema Name:</label>
+        <input type="text" id="schemaName" name="schemaName" value="{{ schemaName }}" required><br>
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" value="{{ password }}" required><br>
+        <label for="serverName">Server Name:</label>
+        <input type="text" id="serverName" name="serverName" value="{{ serverName }}" required><br>
+        <label for="id_group_card">ID Group Card:</label>
+        <input type="text" id="id_group_card" name="id_group_card" value="{{ id_group_card }}" required><br>
+        <label for="AgreeType">Agree Type:</label>
+        <input type="text" id="AgreeType" name="AgreeType" value="{{ AgreeType }}" required><br>
+        <button type="submit">Сохранить</button>
+    </form>
+    <form action="/create_client" method="post">
+        <button type="submit">Создать нового клиента</button>
+    </form>
+    <form action="/create_agreement" method="post">
+        <label for="clid">ID клиента:</label>
+        <input type="text" id="clid" name="clid" required>
+        <button type="submit">Создать договор</button>
+    </form>
+    <a href="/open_log">Открыть файл лога</a>
+</body>
+</html>
