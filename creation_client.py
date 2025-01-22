@@ -47,6 +47,11 @@ log_file_name = f'{real_date}_{computer_name}_{log_file_counter.rjust(5, "0")}.t
 sp10 = " " * 11
 
 def execut_query_to_db(sql: str):
+    """
+    Выполняет SQL-запрос и возвращает результат.
+    :param sql: строка, содержащая запрос
+    :return: список строк
+    """
     cursor = connection.cursor()
     cursor.execute(sql)
     fetch = cursor.fetchall()
@@ -54,11 +59,20 @@ def execut_query_to_db(sql: str):
     return fetch
 
 def execut_query_to_db_no_fetch(sql):
+    """
+    Выполняет SQL-запрос без возврата результата.
+    :param sql: строка, содержащая запрос
+    :return: None
+    """
     cursor = connection.cursor()
     cursor.execute(sql)
     cursor.close()
 
 def unique_inn() -> int:
+    """
+    Функция возвращает уникальное значение ИНН.
+    :return: int
+    """
     while True:
         inn = random.randint(111111111111, 999999999999)
         sql = f'''
@@ -69,6 +83,10 @@ def unique_inn() -> int:
             return inn
 
 def unique_passport_data() -> list:
+    """
+    Функция возвращает уникальное значение серии и номера паспорта.
+    :return: list
+    """
     while True:
         pass_ser = random.randint(1111, 9999)
         pass_num = random.randint(111111, 999999)
@@ -80,6 +98,11 @@ def unique_passport_data() -> list:
             return [pass_ser, pass_num]
 
 def client_add() -> int:
+    """
+    Функция создает нового клиента с использованием сообщения MsgClientAddRq и
+    возвращает CLID созданного клиента.
+    :return: int
+    """
     print_and_log(f'{time.strftime("%H:%M:%S")}   Создается новый клиент . . . \n')
 
     guid = uuid.uuid4()
@@ -127,6 +150,11 @@ def client_add() -> int:
                       f'{sp10}Ошибка: {err}')
 
 def agree_add(last_clid) -> list:
+    """
+    Создается договор для указанного клиента.
+    :param last_clid: CLID
+    :return list: список [AGID, P002]
+    """
     print_and_log(f'{time.strftime("%H:%M:%S")}   Создается новый договор . . . \n')
     guid = uuid.uuid4()
     pl_sql = CREATE_AGREEMENT_QUERY.format(guid=guid, last_clid=last_clid, AgreeType=AgreeType, id_group_card=id_group_card)
@@ -155,30 +183,53 @@ def agree_add(last_clid) -> list:
         else:
             print_and_log(f'{time.strftime("%H:%M:%S")} E Произошла ошибка'
                           f'\n{sp10}Договор не создан'
-                          f'\n{sp10}Cмотрите i24 + i25'
+                          f'\n{sp10}Смотрите i24 + i25'
                           f'\n{sp10}guid сообщения - {guid}')
     except Exception as err:
         print_and_log(f'{time.strftime("%H:%M:%S")} E Произошла ошибка'
                       f'\n{sp10}Договор не создан'
-                      f'\n{sp10}Cмотрите i24 + i25'
+                      f'\n{sp10}Смотрите i24 + i25'
                       f'\n{sp10}guid сообщения - {guid}'
                       f'\n{sp10}Ошибка: {err}')
 
 def print_and_log(text: str):
+    """
+    Печать на экран и в лог файл.
+    :param text: текст для печати и логирования
+    :return: None
+    """
     print(text)
     text = text + '\n'
     with open(f"log\\{log_file_name}", "a") as f:
         f.write(text)
 
 def write_to_file(file_name, date, clid, agid, card_number):
+    """
+    Записывает данные в файл.
+    :param file_name: Имя файла
+    :param date: Дата
+    :param clid: CLID
+    :param agid: AGID
+    :param card_number: Номер карты
+    :return: None
+    """
     with open(file_name, 'a') as file:
         file.write(f'{date};{clid};{agid};{card_number}\n')
 
 def opening_log_file():
+    """
+    Открытие текущего лог файла.
+    :return: None
+    """
     print_and_log(f'{time.strftime("%H:%M:%S")}   Открыт файл "{log_file_name}"')
     os.startfile(f'log\\{log_file_name}')
 
 def return_fio_on_clid(clid: str) -> str:
+    """
+    Получаем ФИО по ID клиента.
+    :param clid: CLID
+    :return: str
+    """
     sql = f'''
         select (N31NAMF || ' '|| N31NAMI || ' '|| N31NAMO) as fio from n31 where N31CLID = {clid}
     '''
@@ -192,6 +243,10 @@ def return_fio_on_clid(clid: str) -> str:
         return f'ERROR клиент отсутствует в целевой БД'
 
 def return_name_id_group_card() -> str:
+    """
+    Функция возвращает текстовое значение группы типовых параметров карт.
+    :return: str
+    """
     try:
         return execut_query_to_db(f"select B30CGDS from b30 where B30CGCD = {id_group_card}")[0][0]
     except Exception as err:
@@ -202,6 +257,10 @@ def return_name_id_group_card() -> str:
         return f'ERROR несуществующий ID группы'
 
 def return_name_id_agree_type() -> str:
+    """
+    Функция возвращает текстовое наименование банковского продукта.
+    :return: str
+    """
     try:
         return execut_query_to_db(f'select T31BPRN from t31 where T31AGRC = {AgreeType}')[0][0]
     except Exception as err:
@@ -212,6 +271,10 @@ def return_name_id_agree_type() -> str:
         return f'ERROR несуществующий ID банковского продукта'
 
 def console_interface():
+    """
+    Основной интерфейс программы.
+    :return: None
+    """
     while True:
         print_and_log(f'\n{time.strftime("%H:%M:%S")}   1 - Создать нового клиента'
                       f'\n{sp10}2 - Открыть договор для {fio_last_clid} CLID = {last_clid}'
