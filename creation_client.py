@@ -7,9 +7,8 @@ import uuid
 import pyperclip
 import platform
 import ctypes
-
 import cx_Oracle  # pip install cx-Oracle
-
+from plsql_queries import CREATE_CLIENT_QUERY, CREATE_AGREEMENT_QUERY  # Импортируем запросы
 import list_of_dict  # список фамилий, имен, отчеств
 
 program_version = 1.4
@@ -29,32 +28,25 @@ last_clid = data['SYSTEM_DATA']['last_clid']
 fio_last_clid = data['SYSTEM_DATA']['fio_last_clid']
 
 real_date = time.strftime('%Y%m%d')
-
 computer_name = platform.node()
 
-ctypes.windll.kernel32.SetConsoleTitleW(f"Создание клиентов и договоров на {config['CONN_PARAM']['schemaName']} @ "
-                                        f"{config['CONN_PARAM']['serverName']}")
+ctypes.windll.kernel32.SetConsoleTitleW(
+    f"Создание клиентов и договоров на {config['CONN_PARAM']['schemaName']} @ {config['CONN_PARAM']['serverName']}")
 
 if log_file_date == real_date:
     log_file_counter = str(int(log_file_counter) + 1)
-    data.set('SYSTEM_DATA', 'log_file_counter', f'{log_file_counter}')
-    with open('data/data.data', 'w') as configfile:
-        data.write(configfile)
 else:
     log_file_counter = str(1)
-    data.set('SYSTEM_DATA', 'log_file_counter', f'{log_file_counter}')
     data.set('SYSTEM_DATA', 'log_file_date', f'{real_date}')
-    with open('data/data.data', 'w') as configfile:
-        data.write(configfile)
-log_file_name = f'{real_date}_{computer_name}_{log_file_counter.rjust(5, "0")}.txt'
 
+data.set('SYSTEM_DATA', 'log_file_counter', f'{log_file_counter}')
+with open('data/data.data', 'w') as configfile:
+    data.write(configfile)
+
+log_file_name = f'{real_date}_{computer_name}_{log_file_counter.rjust(5, "0")}.txt'
 sp10 = " " * 11
 
 def execut_query_to_db(sql: str):
-    """
-    :param sql: строка, содержащая запрос
-    :return: список строк
-    """
     cursor = connection.cursor()
     cursor.execute(sql)
     fetch = cursor.fetchall()
@@ -62,58 +54,32 @@ def execut_query_to_db(sql: str):
     return fetch
 
 def execut_query_to_db_no_fetch(sql):
-    """
-    для PL/SQL
-    :param sql: строка, содержащая запрос
-    :return: None
-    """
     cursor = connection.cursor()
     cursor.execute(sql)
     cursor.close()
 
 def unique_inn() -> int:
-    """
-    Функция возвращает уникальное значение ИНН
-    :return: int
-    """
     while True:
         inn = random.randint(111111111111, 999999999999)
         sql = f'''
             select N31CLID from n31 where n31cinn = '{inn}'
             '''
         result = execut_query_to_db(sql)
-        if result:
-            pass
-        else:
+        if not result:
             return inn
 
 def unique_passport_data() -> list:
-    """
-    Функция возвращает уникальное значение серии и номера паспорта
-    в виде списка из двух элементов в формате [СЕРИЯ, НОМЕР]
-    :return: list
-    """
     while True:
-        pass_data = []
         pass_ser = random.randint(1111, 9999)
         pass_num = random.randint(111111, 999999)
         sql = f'''
                 select N37CLID from n37 where N37DCTP = 1 and N37PSER = '{pass_ser}' and N37PNUM = '{pass_num}'
             '''
         result = execut_query_to_db(sql)
-        if result:
-            pass
-        else:
-            pass_data.insert(0, pass_ser)
-            pass_data.insert(1, pass_num)
-            return pass_data
+        if not result:
+            return [pass_ser, pass_num]
 
 def client_add() -> int:
-    """
-    Функция создает нового клиента с использованием сообщения MsgClientAddRq и
-    возвращает CLID созданного клиента
-    :return:
-    """
     print_and_log(f'{time.strftime("%H:%M:%S")}   Создается новый клиент . . . \n')
 
     guid = uuid.uuid4()
@@ -130,75 +96,7 @@ def client_add() -> int:
 
     TVAL = str(random.randint(0, 999_99_99)).rjust(7, "0")
 
-    plSql = f'''
-    declare
-    A           CLOB;
-    B           CLOB;
-    pserrdesc   varchar2(1000);
-    TEXT CLOB:= '
-    <MsgClientAddRq>
-        <RqUID>{guid}</RqUID>
-        <PersonForm>
-            <PersonName>
-                <NAMF>{NAMF}</NAMF>
-                <NAMI>{NAMI}</NAMI>
-                <NAMO>{NAMO}</NAMO>
-            </PersonName>
-
-            <PersonCommonInfo>
-                <TSEX>мужской</TSEX>
-                <BITH>{BITH}</BITH>
-                <CINN>{CINN}</CINN>
-                <TAGO>1</TAGO>
-                <CNTR internal_id="643"/>
-                <LBIR>Москва</LBIR>
-                <WORK>ПСИТ PYTHON {computer_name}</WORK>
-            </PersonCommonInfo>
-
-            <IdentityPaper out_of_date="false" internal_id="0" deleted="false">
-                <DCTP internal_id="1"/>
-                <PNUM>{PNUM}</PNUM>
-                <PSER>{PSER}</PSER>
-                <PORG>ОВД Пресненского района 55</PORG>
-                <DEPC>133-456</DEPC>
-                <PDAT>2016-08-13</PDAT>
-                <CNTR internal_id="643"></CNTR>
-                <PDEX>2031-08-13</PDEX>
-            </IdentityPaper>
-            <PersonAddress>
-                <PersonAddressType internal_id="1"></PersonAddressType>
-                    <AddressParams>
-                        <CNTR internal_id="643"></CNTR>
-                        <INDX>123456</INDX>
-
-                        <SITY>Москва</SITY>
-                        <TSIT>город</TSIT>
-                        <PNNM>Москва</PNNM>
-
-                        <STNM>Живописная</STNM>
-                        <STTP>улица</STTP>
-                        <HOUS>8</HOUS>
-                        <BLDN>1</BLDN>
-                        <COMP>2</COMP>
-                        <APRT>12</APRT>
-
-                    </AddressParams>
-            </PersonAddress>
-
-            <ContactInfo>
-                <ContactType internal_id="21805"></ContactType>
-                <TVAL>+9(905){TVAL}</TVAL>
-                <TCOM>Комментарий не звонить</TCOM>
-            </ContactInfo>
-
-        </PersonForm>
-
-    </MsgClientAddRq>
-    ';
-    begin
-            B:=RRAM_HANDLER.UniMessHandler(TEXT,'DBO3CARDR',to_char(null),null,null,1, pserrdesc);
-    end;
-'''
+    plSql = CREATE_CLIENT_QUERY.format(guid=guid, NAMF=NAMF, NAMI=NAMI, NAMO=NAMO, BITH=BITH, CINN=CINN, PNUM=PNUM, PSER=PSER, TVAL=TVAL, computer_name=computer_name)
     execut_query_to_db_no_fetch(plSql)
 
     sql = f'''
@@ -229,38 +127,9 @@ def client_add() -> int:
                       f'{sp10}Ошибка: {err}')
 
 def agree_add(last_clid) -> list:
-    """
-    Создается договор для указанного клиента
-    :param last_clid: CLID
-    :return list: список [AGID, P002]
-    """
     print_and_log(f'{time.strftime("%H:%M:%S")}   Создается новый договор . . . \n')
     guid = uuid.uuid4()
-    pl_sql = f'''
-    declare
-    B           CLOB;
-    pserrdesc   varchar2(1000);
-    TEXT CLOB:= '
-    <MsgAgreeAddRq actual_at_once="true">
-        <RqUID>{guid}</RqUID>
-        <ClientId>{last_clid}</ClientId>  
-        <AgreeRequest>
-            <AgreeType internal_id="{AgreeType}"></AgreeType>
-            <AgreeSum>100</AgreeSum>
-            <AgreeCardInfo>
-                <NotInstantCard>
-                    <MainParameters>
-                        <GroupCardId internal_id="{id_group_card}"></GroupCardId>
-                    </MainParameters>
-                </NotInstantCard>
-            </AgreeCardInfo>  
-        </AgreeRequest>
-    </MsgAgreeAddRq>
-    ';
-    begin
-                B:=RRAM_HANDLER.UniMessHandler(TEXT,'DBO3CARDR',to_char(null),null,null,1, pserrdesc);
-    end;
-                '''
+    pl_sql = CREATE_AGREEMENT_QUERY.format(guid=guid, last_clid=last_clid, AgreeType=AgreeType, id_group_card=id_group_card)
     execut_query_to_db_no_fetch(pl_sql)
 
     sql = f'''
@@ -296,43 +165,20 @@ def agree_add(last_clid) -> list:
                       f'\n{sp10}Ошибка: {err}')
 
 def print_and_log(text: str):
-    """
-    Печать на экран и в лог файл
-    :param text:
-    :return:
-    """
     print(text)
     text = text + '\n'
     with open(f"log\\{log_file_name}", "a") as f:
         f.write(text)
 
 def write_to_file(file_name, date, clid, agid, card_number):
-    """
-    Записывает данные в файл
-    :param file_name: Имя файла
-    :param date: Дата
-    :param clid: CLID
-    :param agid: AGID
-    :param card_number: Номер карты
-    :return:
-    """
     with open(file_name, 'a') as file:
         file.write(f'{date};{clid};{agid};{card_number}\n')
 
 def opening_log_file():
-    """
-    Открытие текущего лог файла
-    :return:
-    """
     print_and_log(f'{time.strftime("%H:%M:%S")}   Открыт файл "{log_file_name}"')
     os.startfile(f'log\\{log_file_name}')
 
 def return_fio_on_clid(clid: str) -> str:
-    """
-    Получаем ФИО по ID клиента
-    :param clid:
-    :return: str
-    """
     sql = f'''
         select (N31NAMF || ' '|| N31NAMI || ' '|| N31NAMO) as fio from n31 where N31CLID = {clid}
     '''
@@ -346,11 +192,6 @@ def return_fio_on_clid(clid: str) -> str:
         return f'ERROR клиент отсутствует в целевой БД'
 
 def return_name_id_group_card() -> str:
-    """
-    Функция возвращает текстовое значение группы типовых параметров карт
-    на основе параметра id_group_card из ini файла
-    :return: str
-    """
     try:
         return execut_query_to_db(f"select B30CGDS from b30 where B30CGCD = {id_group_card}")[0][0]
     except Exception as err:
@@ -361,11 +202,6 @@ def return_name_id_group_card() -> str:
         return f'ERROR несуществующий ID группы'
 
 def return_name_id_agree_type() -> str:
-    """
-    Функция возвращает текстовое наименование банковского продукта
-    на основе параметра AgreeType из ini файла
-    :return: -> str
-    """
     try:
         return execut_query_to_db(f'select T31BPRN from t31 where T31AGRC = {AgreeType}')[0][0]
     except Exception as err:
@@ -376,10 +212,6 @@ def return_name_id_agree_type() -> str:
         return f'ERROR несуществующий ID банковского продукта'
 
 def console_interface():
-    """
-    Основной интерфейс программы
-    :return:
-    """
     while True:
         print_and_log(f'\n{time.strftime("%H:%M:%S")}   1 - Создать нового клиента'
                       f'\n{sp10}2 - Открыть договор для {fio_last_clid} CLID = {last_clid}'
@@ -421,7 +253,6 @@ def console_interface():
             return
 
 if __name__ == '__main__':
-
     connection = None
     try:
         schemaName = config['CONN_PARAM']['schemaName']
