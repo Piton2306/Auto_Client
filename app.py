@@ -69,18 +69,30 @@ data.set('SYSTEM_DATA', 'log_file_counter', f'{log_file_counter}')
 with open('data/data.data', 'w') as configfile:
     data.write(configfile)
 
-# Определение имени лог-файла
-log_file_name = f'{real_date}_{computer_name}_{log_file_counter.rjust(5, "0")}.txt'
-
 # Настройка логирования
-logging.basicConfig(
-    level=logging.DEBUG,
-    format='%(asctime)s - %(levelname)s - %(message)s',
-    handlers=[
-        logging.FileHandler(f"log/{log_file_name}"),
-        logging.StreamHandler()
-    ]
-)
+log_file_name = f'{real_date}_{computer_name}_{log_file_counter.rjust(5, "0")}.txt'
+log_file_path = os.path.join('log', log_file_name)
+
+# Создаем логгер
+logger = logging.getLogger()
+logger.setLevel(logging.DEBUG)
+
+# Создаем обработчик для записи логов в файл
+file_handler = logging.FileHandler(log_file_path, encoding='utf-8')
+file_handler.setLevel(logging.DEBUG)
+
+# Создаем обработчик для вывода логов в консоль
+stream_handler = logging.StreamHandler()
+stream_handler.setLevel(logging.DEBUG)
+
+# Создаем форматтер для логов
+formatter = logging.Formatter('%(asctime)s,%(msecs)03d - %(levelname)s - %(message)s')
+file_handler.setFormatter(formatter)
+stream_handler.setFormatter(formatter)
+
+# Добавляем обработчики в логгер
+logger.addHandler(file_handler)
+logger.addHandler(stream_handler)
 
 sp10 = " " * 11
 
@@ -312,7 +324,6 @@ def return_name_id_agree_type() -> str:
         return f'ERROR несуществующий ID банковского продукта'
 
 
-
 @app.route('/create_client', methods=['POST'])
 def create_client():
     new_clid = client_add()
@@ -334,8 +345,19 @@ def create_agreement():
 
 @app.route('/open_log')
 def open_log():
-    opening_log_file()
-    return 'Файл лога открыт'
+    log_file_name = f'{log_file_date}_{computer_name}_{log_file_counter.rjust(5, "0")}.txt'
+    return render_template('open_log.html', log_file_name=log_file_name)
+
+
+@app.route('/view_log')
+def view_log():
+    log_file_path = os.path.join('log', log_file_name)
+    try:
+        with open(log_file_path, 'r', encoding='utf-8', errors='replace') as log_file:
+            log_content = log_file.read()
+        return render_template('view_log.html', log_content=log_content)
+    except Exception as e:
+        return f"Ошибка при чтении файла лога: {e}"
 
 
 @app.route('/')
@@ -346,12 +368,15 @@ def index():
     id_group_card = config['AGREE_PARAM']['id_group_card']
     AgreeType = config['AGREE_PARAM']['AgreeType']
 
+    log_file_name = f'{log_file_date}_{computer_name}_{log_file_counter.rjust(5, "0")}.txt'
+
     logging.info(f'Schema Name: {schemaName}')
     logging.info(f'Server Name: {serverName}')
     logging.info(f'ID Group Card: {id_group_card}')
     logging.info(f'Agree Type: {AgreeType}')
 
-    return render_template('index.html', schemaName=schemaName, password=password, serverName=serverName, id_group_card=id_group_card, AgreeType=AgreeType)
+    return render_template('index.html', schemaName=schemaName, password=password, serverName=serverName,
+                           id_group_card=id_group_card, AgreeType=AgreeType, log_file_name=log_file_name)
 
 
 if __name__ == '__main__':
@@ -373,6 +398,6 @@ if __name__ == '__main__':
     except cx_Oracle.Error as error:
         logging.error(f'Ошибка подключения: {error}')
     else:
-        app.run(host='0.0.0.0', port=5001)
+        app.run(host='0.0.0.0', port=5000)
 
     logging.info('Исполнение программы завершено')
