@@ -1,7 +1,7 @@
 import time
 
 import cx_Oracle  # pip install cx-Oracle
-from flask import Flask, request, render_template, g
+from flask import Flask, request, render_template, g, jsonify
 
 import configparser
 import ctypes
@@ -25,7 +25,7 @@ config = configparser.ConfigParser()
 config.read(r'connection_parameters.ini')
 
 id_group_card = config['AGREE_PARAM']['id_group_card']
-AgreeType = config['AGREE_PARAM']['AgreeType']
+AgreeType = config['AGREE_PARAM']['agreetype']
 
 data = configparser.ConfigParser()
 data.read(r'data\data.data')
@@ -77,44 +77,81 @@ def before_request():
     g.log_file_name, g.logger = setup_logging(log_file_date, log_file_counter, real_date, g.user_ip)
 
 
-
 @app.route('/')
 def index():
     schemaName = config['CONN_PARAM']['schemaname']
     password = config['CONN_PARAM']['password']
     serverName = config['CONN_PARAM']['servername']
     id_group_card = config['AGREE_PARAM']['id_group_card']
-    AgreeType = config['AGREE_PARAM']['AgreeType']
+    AgreeType = config['AGREE_PARAM']['agreetype']
 
-    g.logger.info(f'Schema Name: {schemaName}')
-    g.logger.info(f'Server Name: {serverName}')
-    g.logger.info(f'ID Group Card: {id_group_card}')
-    g.logger.info(f'Agree Type: {AgreeType}')
+    g.logger.info(f'Имя схемы: {schemaName}')
+    g.logger.info(f'Имя сервера: {serverName}')
+    g.logger.info(f'ID группы карт: {id_group_card}')
+    g.logger.info(f'Тип соглашения: {AgreeType}')
 
     return render_template('index.html', schemaName=schemaName, password=password, serverName=serverName,
-                           id_group_card=id_group_card, AgreeType=AgreeType, log_file_name=g.log_file_name)
+                           id_group_card=id_group_card, AgreeType=AgreeType, log_file_name=g.log_file_name,
+                           default_schemaName=schemaName, default_password=password, default_serverName=serverName,
+                           default_id_group_card=id_group_card, default_AgreeType=AgreeType)
 
-@app.route('/create_client', methods=['POST'])
+
+@app.route('/create_client', methods=['POST'], endpoint='create_client_route')
 def create_client():
-    new_clid = client_add()
+    schemaName = request.form.get('schemaName')
+    password = request.form.get('password')
+    serverName = request.form.get('serverName')
+    id_group_card = request.form.get('id_group_card')
+    AgreeType = request.form.get('AgreeType')
+
+    if not all([schemaName, password, serverName, id_group_card, AgreeType]):
+        return 'Ошибка: Не все поля заполнены', 400
+
+    # Логирование данных, полученных от клиента
+    g.logger.info(
+        f'Получены данные для создания клиента: имя схемы={schemaName}, пароль={password}, имя сервера={serverName}, ID группы карт={id_group_card}, тип соглашения={AgreeType}')
+
+    # Подключение к базе данных с использованием новых параметров
+    connection = cx_Oracle.connect(schemaName, password, serverName, encoding='utf-8')
+
+    new_clid = client_add(connection, id_group_card, AgreeType)
     if new_clid:
         return f'Создан новый клиент с CLID = {new_clid}'
     else:
-        return 'Ошибка при создании клиента'
+        return 'Ошибка при создании клиента', 500
 
-@app.route('/create_agreement', methods=['POST'])
+
+@app.route('/create_agreement', methods=['POST'], endpoint='create_agreement_route')
 def create_agreement():
-    clid = request.form['clid']
-    new_agid = agree_add(clid)
+    clid = request.form.get('clid')
+    id_group_card = request.form.get('id_group_card')
+    AgreeType = request.form.get('AgreeType')
+    schemaName = request.form.get('schemaName')
+    password = request.form.get('password')
+    serverName = request.form.get('serverName')
+
+    # Логирование данных, полученных от клиента
+    g.logger.info(
+        f'Получены данные для создания договора: CLID={clid}, ID группы карт={id_group_card}, тип соглашения={AgreeType}, имя схемы={schemaName}, пароль={password}, имя сервера={serverName}')
+
+    if not all([clid, id_group_card, AgreeType, schemaName, password, serverName]):
+        return 'Ошибка: Не все поля заполнены', 400
+
+    # Подключение к базе данных с использованием новых параметров
+    connection = cx_Oracle.connect(schemaName, password, serverName, encoding='utf-8')
+
+    new_agid = agree_add(connection, clid, id_group_card, AgreeType)
     if new_agid:
         return f'Создан новый договор с AGID = {new_agid[0]} и номером карты = {new_agid[1]}'
     else:
-        return 'Ошибка при создании договора'
+        return 'Ошибка при создании договора', 500
+
 
 @app.route('/open_log')
 def open_log():
     opening_log_file()
     return 'Файл лога открыт'
+
 
 @app.route('/view_log')
 def view_log():
@@ -127,10 +164,28 @@ def view_log():
         return f"Ошибка при чтении файла лога: {e}"
 
 
+@app.route('/update_config', methods=['POST'], endpoint='update_config_route')
+def update_config():
+    schemaName = request.form.get('schemaName')
+    password = request.form.get('password')
+    serverName = request.form.get('serverName')
+    id_group_card = request.form.get('id_group_card')
+    AgreeType = request.form.get('AgreeType')
 
-def execut_query_to_db(sql: str):
+    if not all([schemaName, password, serverName, id_group_card, AgreeType]):
+        return 'Ошибка: Не все поля заполнены', 400
+
+    # Логирование данных, полученных от клиента
+    g.logger.info(
+        f'Получены данные для обновления конфигурации: имя схемы={schemaName}, пароль={password}, имя сервера={serverName}, ID группы карт={id_group_card}, тип соглашения={AgreeType}')
+
+    return jsonify(success=True)
+
+
+def execut_query_to_db(connection, sql: str):
     """
     Выполняет SQL-запрос и возвращает результат.
+    :param connection: соединение с базой данных
     :param sql: строка, содержащая запрос
     :return: список строк
     """
@@ -140,15 +195,18 @@ def execut_query_to_db(sql: str):
     cursor.close()
     return fetch
 
-def execut_query_to_db_no_fetch(sql):
+
+def execut_query_to_db_no_fetch(connection, sql):
     """
     Выполняет SQL-запрос без возврата результата.
+    :param connection: соединение с базой данных
     :param sql: строка, содержащая запрос
     :return: None
     """
     cursor = connection.cursor()
     cursor.execute(sql)
     cursor.close()
+
 
 def unique_inn() -> int:
     """
@@ -160,9 +218,10 @@ def unique_inn() -> int:
         sql = f'''
             select N31CLID from n31 where n31cinn = '{inn}'
             '''
-        result = execut_query_to_db(sql)
+        result = execut_query_to_db(connection, sql)
         if not result:
             return inn
+
 
 def unique_passport_data() -> list:
     """
@@ -175,14 +234,18 @@ def unique_passport_data() -> list:
         sql = f'''
                 select N37CLID from n37 where N37DCTP = 1 and N37PSER = '{pass_ser}' and N37PNUM = '{pass_num}'
             '''
-        result = execut_query_to_db(sql)
+        result = execut_query_to_db(connection, sql)
         if not result:
             return [pass_ser, pass_num]
 
-def client_add() -> int:
+
+def client_add(connection, id_group_card, AgreeType) -> int:
     """
     Функция создает нового клиента с использованием сообщения MsgClientAddRq и
     возвращает CLID созданного клиента.
+    :param connection: соединение с базой данных
+    :param id_group_card: ID группы карт
+    :param AgreeType: Тип соглашения
     :return: int
     """
     g.logger.info('Создается новый клиент...')
@@ -203,7 +266,7 @@ def client_add() -> int:
 
     plSql = CREATE_CLIENT_QUERY.format(guid=guid, NAMF=NAMF, NAMI=NAMI, NAMO=NAMO, BITH=BITH, CINN=CINN, PNUM=PNUM,
                                        PSER=PSER, TVAL=TVAL, computer_name=computer_name)
-    execut_query_to_db_no_fetch(plSql)
+    execut_query_to_db_no_fetch(connection, plSql)
 
     sql = f'''
         select N37CLID, N31NAMF, N31NAMI, N31NAMO from n37
@@ -211,7 +274,7 @@ def client_add() -> int:
         where N37DCTP = 1 and N37PSER = '{PSER}' and N37PNUM = '{PNUM}'
             '''
     try:
-        result = execut_query_to_db(sql)
+        result = execut_query_to_db(connection, sql)
         clid = result[0][0]
         g.logger.info(f'Создан клиент - {result[0][1]} {result[0][2]} {result[0][3]}')
         g.logger.info(f'Паспорт гражданина РФ: серия - {PSER} номер - {PNUM}')
@@ -220,7 +283,7 @@ def client_add() -> int:
         global last_clid
         global fio_last_clid
         last_clid = clid
-        fio_last_clid = return_fio_on_clid(last_clid)
+        fio_last_clid = return_fio_on_clid(connection, last_clid)
         data.set('SYSTEM_DATA', 'last_clid', f'{last_clid}')
         data.set('SYSTEM_DATA', 'fio_last_clid', f'{fio_last_clid}')
         with open('data/data.data', 'w') as configfile:
@@ -230,16 +293,20 @@ def client_add() -> int:
     except Exception as err:
         g.logger.error(f'Произошла ошибка, смотрите логи, пробуйте снова. guid сообщения - {guid}. Ошибка: {err}')
 
-def agree_add(clid) -> list:
+
+def agree_add(connection, clid, id_group_card, AgreeType) -> list:
     """
     Создается договор для указанного клиента.
+    :param connection: соединение с базой данных
     :param clid: CLID
+    :param id_group_card: ID группы карт
+    :param AgreeType: Тип соглашения
     :return list: список [AGID, P002]
     """
     g.logger.info('Создается новый договор...')
     guid = uuid.uuid4()
     pl_sql = CREATE_AGREEMENT_QUERY.format(guid=guid, last_clid=clid, AgreeType=AgreeType, id_group_card=id_group_card)
-    execut_query_to_db_no_fetch(pl_sql)
+    execut_query_to_db_no_fetch(connection, pl_sql)
 
     sql = f'''
         select N02DCID as AGID, B31P002 as P002 from i24
@@ -248,10 +315,10 @@ def agree_add(clid) -> list:
         where I24RQID = '{guid}'
             '''
     try:
-        result = execut_query_to_db(sql)
+        result = execut_query_to_db(connection, sql)
         AGID, P002 = result[0][0], result[0][1]
         if AGID:
-            g.logger.info(f'Создан договор для {return_fio_on_clid(clid)}')
+            g.logger.info(f'Создан договор для {return_fio_on_clid(connection, clid)}')
             g.logger.info(f'AGID = {AGID}')
             g.logger.info(f'Карта - {P002}')
             info_on_agid = [AGID, P002]
@@ -264,7 +331,7 @@ def agree_add(clid) -> list:
             global last_clid
             global fio_last_clid
             last_clid = clid
-            fio_last_clid = return_fio_on_clid(last_clid)
+            fio_last_clid = return_fio_on_clid(connection, last_clid)
             data.set('SYSTEM_DATA', 'last_clid', f'{last_clid}')
             data.set('SYSTEM_DATA', 'fio_last_clid', f'{fio_last_clid}')
             with open('data/data.data', 'w') as configfile:
@@ -279,6 +346,7 @@ def agree_add(clid) -> list:
         g.logger.error(f'guid сообщения - {guid}')
         g.logger.error(f'Ошибка: {err}')
 
+
 def write_to_file(file_name, date, clid, agid, card_number):
     """
     Записывает данные в файл.
@@ -292,6 +360,7 @@ def write_to_file(file_name, date, clid, agid, card_number):
     with open(file_name, 'a') as file:
         file.write(f'{date};{clid};{agid};{card_number}\n')
 
+
 def opening_log_file():
     """
     Открытие текущего лог файла.
@@ -300,9 +369,11 @@ def opening_log_file():
     g.logger.info(f'Открыт файл "{g.log_file_name}"')
     os.startfile(f'log\\{g.log_file_name}')
 
-def return_fio_on_clid(clid: str) -> str:
+
+def return_fio_on_clid(connection, clid: str) -> str:
     """
     Получаем ФИО по ID клиента.
+    :param connection: соединение с базой данных
     :param clid: CLID
     :return: str
     """
@@ -310,7 +381,7 @@ def return_fio_on_clid(clid: str) -> str:
         select (N31NAMF || ' '|| N31NAMI || ' '|| N31NAMO) as fio from n31 where N31CLID = {clid}
     '''
     try:
-        result = execut_query_to_db(sql)
+        result = execut_query_to_db(connection, sql)
         if result:
             return result[0][0]
         else:
@@ -320,30 +391,33 @@ def return_fio_on_clid(clid: str) -> str:
         g.logger.error(f'Ошибка при получении ФИО по ID клиента {clid}: {err}')
         return f'ERROR ошибка при получении ФИО'
 
-def return_name_id_group_card() -> str:
+
+def return_name_id_group_card(connection) -> str:
     """
     Функция возвращает текстовое значение группы типовых параметров карт.
+    :param connection: соединение с базой данных
     :return: str
     """
     try:
-        return execut_query_to_db(f"select B30CGDS from b30 where B30CGCD = {id_group_card}")[0][0]
+        return execut_query_to_db(connection, f"select B30CGDS from b30 where B30CGCD = {id_group_card}")[0][0]
     except Exception as err:
         g.logger.error(f'Несуществующий ID группы типовых параметров карт ({id_group_card}) в ini файле')
         g.logger.error(f'Ошибка: {err}')
         return f'ERROR несуществующий ID группы'
 
-def return_name_id_agree_type() -> str:
+
+def return_name_id_agree_type(connection) -> str:
     """
     Функция возвращает текстовое наименование банковского продукта.
+    :param connection: соединение с базой данных
     :return: str
     """
     try:
-        return execut_query_to_db(f'select T31BPRN from t31 where T31AGRC = {AgreeType}')[0][0]
+        return execut_query_to_db(connection, f'select T31BPRN from t31 where T31AGRC = {AgreeType}')[0][0]
     except Exception as err:
         g.logger.error(f'Несуществующий ID банковского продукта ({AgreeType}) в ini файле')
         g.logger.error(f'Ошибка: {err}')
         return f'ERROR несуществующий ID банковского продукта'
-
 
 
 if __name__ == '__main__':
@@ -363,13 +437,12 @@ if __name__ == '__main__':
                 g.user_ip = '127.0.0.1'  # Используем локальный IP для инициализации
                 g.log_file_name, g.logger = setup_logging(log_file_date, log_file_counter, real_date, g.user_ip)
                 g.logger.info(f'Пишется файл лога - "{g.log_file_name}"')
-                g.logger.info(f'Банковский продукт - "{return_name_id_agree_type()}" (ID = {AgreeType})')
-                g.logger.info(f'Группа карт - "{return_name_id_group_card()}" (ID = {id_group_card})')
-                g.logger.info(f'Последний клиент - {return_fio_on_clid(last_clid)} CLID = {last_clid}')
+                g.logger.info(f'Банковский продукт - "{return_name_id_agree_type(connection)}" (ID = {AgreeType})')
+                g.logger.info(f'Группа карт - "{return_name_id_group_card(connection)}" (ID = {id_group_card})')
+                g.logger.info(f'Последний клиент - {return_fio_on_clid(connection, last_clid)} CLID = {last_clid}')
         except cx_Oracle.Error as error:
             logging.error(f'Ошибка подключения: {error}')
         else:
             app.run(host='0.0.0.0', port=5000)
 
         logging.info('Исполнение программы завершено')
-
