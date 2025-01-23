@@ -1,0 +1,18 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <title>Договор создан</title>
+    <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
+</head>
+<body>
+    <h1>Договор успешно создан</h1>
+    <p><strong>AGID:</strong> {{ agid }}</p>
+    <p><strong>Номер карты:</strong> {{ card_number }}</p>
+    <p><strong>Фамилия:</strong> {{ client_data.last_name }}</p>
+    <p><strong>Имя:</strong> {{ client_data.first_name }}</p>
+    <p><strong>Отчество:</strong> {{ client_data.middle_name }}</p>
+    <p><strong>Паспорт гражданина РФ:</strong> Серия - {{client_data.passport_series}}, Номер - {{ client_data.passport_number }}</p>
+    <a href="/">Вернуться на главную страницу</a>
+</body>
+</html>

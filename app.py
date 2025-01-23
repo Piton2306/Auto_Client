@@ -142,9 +142,51 @@ def create_agreement():
 
     new_agid = agree_add(connection, clid, id_group_card, AgreeType)
     if new_agid:
-        return f'Создан новый договор с AGID = {new_agid[0]} и номером карты = {new_agid[1]}'
+        # Получение данных клиента для отображения
+        client_data = get_client_data(connection, clid)
+        return render_template('agreement_created.html', agid=new_agid[0], card_number=new_agid[1],
+                               client_data=client_data)
     else:
         return 'Ошибка при создании договора', 500
+
+
+def get_client_data(connection, clid):
+    """
+    Получает данные клиента по CLID.
+    :param connection: соединение с базой данных
+    :param clid: CLID клиента
+    :return: словарь с данными клиента
+    """
+    sql = f'''
+        select N31NAMF, N31NAMI, N31NAMO, N37PSER, N37PNUM from n31
+        join n37 on N31CLID = N37CLID
+        where N31CLID = {clid}
+    '''
+    result = execut_query_to_db(connection, sql)
+    if result:
+        return {
+            'last_name': result[0][0],
+            'first_name': result[0][1],
+            'middle_name': result[0][2],
+            'passport_series': result[0][3],
+            'passport_number': result[0][4]
+        }
+    else:
+        return None
+
+
+def get_log_content(log_file_name):
+    """
+    Получает содержимое лог-файла.
+    :param log_file_name: Имя лог-файла
+    :return: Содержимое лог-файла
+    """
+    log_file_path = os.path.join('log', log_file_name)
+    try:
+        with open(log_file_path, 'r', encoding='utf-8', errors='replace') as log_file:
+            return log_file.read()
+    except Exception as e:
+        return f"Ошибка при чтении файла лога: {e}"
 
 
 @app.route('/open_log')
