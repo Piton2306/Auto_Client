@@ -1,5 +1,5 @@
 document.addEventListener('DOMContentLoaded', function() {
-    // Загрузка сохраненных параметров из localStorage
+    // Загрузка сохраненных параметров из localStorage или использование значений по умолчанию из ini
     document.getElementById('schemaName').value = localStorage.getItem('schemaName') || '{{ default_schemaName }}';
     document.getElementById('password').value = localStorage.getItem('password') || '{{ default_password }}';
     document.getElementById('serverName').value = localStorage.getItem('serverName') || '{{ default_serverName }}';
@@ -50,9 +50,6 @@ function updateConfig() {
     document.getElementById('AgreeType_hidden_client').value = AgreeType;
     document.getElementById('id_group_card_hidden_agreement').value = id_group_card;
     document.getElementById('AgreeType_hidden_agreement').value = AgreeType;
-
-    // Логирование данных, отправляемых на сервер
-    console.log(`Отправляемые данные: schemaName=${schemaName}, password=${password}, serverName=${serverName}, id_group_card=${id_group_card}, AgreeType=${AgreeType}`);
 
     // Отправка данных на сервер для логирования
     fetch('/update_config', {
