@@ -29,8 +29,8 @@
         <input type="hidden" id="schemaNameHidden" name="schemaName" value="{{ default_schemaName }}">
         <input type="hidden" id="passwordHidden" name="password" value="{{ default_password }}">
         <input type="hidden" id="serverNameHidden" name="serverName" value="{{ default_serverName }}">
-        <input type="hidden" id="id_group_card_hidden" name="id_group_card" value="{{ default_id_group_card }}">
-        <input type="hidden" id="AgreeType_hidden" name="AgreeType" value="{{ default_AgreeType }}">
+        <input type="hidden" id="id_group_card_hidden_client" name="id_group_card" value="{{ default_id_group_card }}">
+        <input type="hidden" id="AgreeType_hidden_client" name="AgreeType" value="{{ default_AgreeType }}">
         <button type="submit">Создать нового клиента</button>
     </form>
     <form action="/create_agreement" method="post" onsubmit="fillHiddenFields(event)">
@@ -39,8 +39,8 @@
         <input type="hidden" id="schemaNameHiddenAgreement" name="schemaName">
         <input type="hidden" id="passwordHiddenAgreement" name="password">
         <input type="hidden" id="serverNameHiddenAgreement" name="serverName">
-        <input type="hidden" id="id_group_card_hidden" name="id_group_card" value="{{ default_id_group_card }}">
-        <input type="hidden" id="AgreeType_hidden" name="AgreeType" value="{{ default_AgreeType }}">
+        <input type="hidden" id="id_group_card_hidden_agreement" name="id_group_card">
+        <input type="hidden" id="AgreeType_hidden_agreement" name="AgreeType">
         <button type="submit">Создать договор</button>
     </form>
     <button onclick="refreshPage()">Обновить страницу</button>

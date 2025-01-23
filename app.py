@@ -121,7 +121,7 @@ def create_client():
         return 'Ошибка при создании клиента', 500
 
 
-@app.route('/create_agreement', methods=['POST'], endpoint='create_agreement_route')
+@app.route('/create_agreement', methods=['POST'])
 def create_agreement():
     clid = request.form.get('clid')
     id_group_card = request.form.get('id_group_card')

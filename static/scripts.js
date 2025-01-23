@@ -1,5 +1,3 @@
-// static/scripts.js
-
 document.addEventListener('DOMContentLoaded', function() {
     // Загрузка сохраненных параметров из localStorage
     document.getElementById('schemaName').value = localStorage.getItem('schemaName') || '{{ default_schemaName }}';
@@ -18,8 +16,10 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('schemaNameHidden').value = localStorage.getItem('schemaName') || '{{ default_schemaName }}';
     document.getElementById('passwordHidden').value = localStorage.getItem('password') || '{{ default_password }}';
     document.getElementById('serverNameHidden').value = localStorage.getItem('serverName') || '{{ default_serverName }}';
-    document.getElementById('id_group_card_hidden').value = localStorage.getItem('id_group_card') || '{{ default_id_group_card }}';
-    document.getElementById('AgreeType_hidden').value = localStorage.getItem('AgreeType') || '{{ default_AgreeType }}';
+    document.getElementById('id_group_card_hidden_client').value = localStorage.getItem('id_group_card') || '{{ default_id_group_card }}';
+    document.getElementById('AgreeType_hidden_client').value = localStorage.getItem('AgreeType') || '{{ default_AgreeType }}';
+    document.getElementById('id_group_card_hidden_agreement').value = localStorage.getItem('id_group_card') || '{{ default_id_group_card }}';
+    document.getElementById('AgreeType_hidden_agreement').value = localStorage.getItem('AgreeType') || '{{ default_AgreeType }}';
 });
 
 function updateConfig() {
@@ -46,8 +46,10 @@ function updateConfig() {
     document.getElementById('schemaNameHidden').value = schemaName;
     document.getElementById('passwordHidden').value = password;
     document.getElementById('serverNameHidden').value = serverName;
-    document.getElementById('id_group_card_hidden').value = id_group_card;
-    document.getElementById('AgreeType_hidden').value = AgreeType;
+    document.getElementById('id_group_card_hidden_client').value = id_group_card;
+    document.getElementById('AgreeType_hidden_client').value = AgreeType;
+    document.getElementById('id_group_card_hidden_agreement').value = id_group_card;
+    document.getElementById('AgreeType_hidden_agreement').value = AgreeType;
 
     // Логирование данных, отправляемых на сервер
     console.log(`Отправляемые данные: schemaName=${schemaName}, password=${password}, serverName=${serverName}, id_group_card=${id_group_card}, AgreeType=${AgreeType}`);
@@ -84,10 +86,14 @@ function fillHiddenFields(event) {
     var schemaName = localStorage.getItem('schemaName') || document.getElementById('schemaName').value;
     var password = localStorage.getItem('password') || document.getElementById('password').value;
     var serverName = localStorage.getItem('serverName') || document.getElementById('serverName').value;
+    var id_group_card = localStorage.getItem('id_group_card') || document.getElementById('id_group_card').value;
+    var AgreeType = localStorage.getItem('AgreeType') || document.getElementById('AgreeType').value;
 
     document.getElementById('schemaNameHiddenAgreement').value = schemaName;
     document.getElementById('passwordHiddenAgreement').value = password;
     document.getElementById('serverNameHiddenAgreement').value = serverName;
+    document.getElementById('id_group_card_hidden_agreement').value = id_group_card;
+    document.getElementById('AgreeType_hidden_agreement').value = AgreeType;
 
     event.target.submit();
 }
