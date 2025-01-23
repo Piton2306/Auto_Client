@@ -48,6 +48,10 @@
             console.log('ID Group Card:', id_group_card);
             console.log('Agree Type:', AgreeType);
         }
+
+        function refreshPage() {
+            location.reload();
+        }
     </script>
 </head>
 <body>
@@ -77,6 +81,7 @@
         <input type="text" id="clid" name="clid" required>
         <button type="submit">Создать договор</button>
     </form>
+    <button onclick="refreshPage()">Обновить страницу</button>
     <a href="/view_log">Открыть файл лога</a>
 </body>
 </html>
