@@ -249,17 +249,69 @@ def opening_log_file(log_file_path):
 
 
 @app.route('/view_log')
+@app.route('/view_log')
 def view_log():
+    # Получаем текущую дату в формате YYYYMMDD
     today_date = datetime.datetime.now().strftime('%Y%m%d')
+    # Создаем путь к папке для сегодняшних логов
     log_directory = os.path.join('log', today_date)
+    # Формируем полный путь к файлу лога
     log_file_path = os.path.join(log_directory, g.log_file_name)
 
+    # Получаем список всех доступных логов для текущего IP-адреса
+    log_files = get_all_log_files_for_ip(g.user_ip)
+
     try:
+        # Открываем файл лога и читаем его содержимое
         with open(log_file_path, 'r', encoding='utf-8', errors='replace') as log_file:
             log_content = log_file.read()
-        return render_template('view_log.html', log_content=log_content)
+        # Возвращаем содержимое лога, список логов и имя текущего файла лога в шаблон
+        return render_template('view_log.html', log_content=log_content, log_files=log_files,
+                               current_log_file=g.log_file_name)
     except Exception as e:
+        # Возвращаем сообщение об ошибке, если не удалось прочитать файл лога
         return f"Ошибка при чтении файла лога: {e}"
+
+
+def get_all_log_files_for_ip(user_ip):
+    """
+    Получает список всех доступных файлов логов для конкретного IP-адреса.
+    :param user_ip: IP-адрес клиента
+    :return: Список файлов логов
+    """
+    log_files = []
+    log_base_directory = 'log'
+
+    # Проходим по всем папкам в базовой директории логов
+    for date_directory in os.listdir(log_base_directory):
+        date_path = os.path.join(log_base_directory, date_directory)
+        if os.path.isdir(date_path):
+            # Проходим по всем файлам в папке даты
+            for log_file in os.listdir(date_path):
+                if user_ip in log_file:
+                    log_files.append((date_directory, log_file))
+
+    # Сортируем файлы логов в обратном порядке
+    log_files.sort(key=lambda x: (x[0], x[1]), reverse=True)
+
+    return log_files
+
+
+@app.route('/view_log_by_date/<date>/<log_file>')
+def view_log_by_date(date, log_file):
+    # Формируем полный путь к файлу лога
+    log_file_path = os.path.join('log', date, log_file)
+
+    try:
+        # Открываем файл лога и читаем его содержимое
+        with open(log_file_path, 'r', encoding='utf-8', errors='replace') as log_file:
+            log_content = log_file.read()
+        # Возвращаем содержимое лога и имя файла лога в шаблон
+        return render_template('view_log.html', log_content=log_content, log_files=get_all_log_files_for_ip(g.user_ip), current_log_file=log_file)
+    except Exception as e:
+        # Возвращаем сообщение об ошибке, если не удалось прочитать файл лога
+        return f"Ошибка при чтении файла лога: {e}"
+
 
 
 @app.route('/update_config', methods=['POST'], endpoint='update_config_route')

@@ -16,7 +16,20 @@
 </head>
 <body>
     <h1>Просмотр файла лога</h1>
+    {% if current_log_file %}
+        <h2>Текущий лог: {{ current_log_file }}</h2>
+    {% endif %}
     <pre>{{ log_content }}</pre>
+
+    <h2>Все доступные логи для вашего IP-адреса:</h2>
+    <ul>
+        {% for date, log_file in log_files %}
+            <li>
+                <a href="/view_log_by_date/{{ date }}/{{ log_file }}">{{ date }} - {{ log_file }}</a>
+            </li>
+        {% endfor %}
+    </ul>
+
     <a href="/">Вернуться на главную страницу</a>
 </body>
 </html>
