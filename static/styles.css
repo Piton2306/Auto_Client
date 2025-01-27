@@ -56,3 +56,17 @@ a {
 a:hover {
     text-decoration: underline;
 }
+
+.link-container {
+    display: flex;
+    align-items: center;
+    margin-bottom: 20px;
+}
+
+.link-container a {
+    margin-right: 100px; /* Установите нужное расстояние между ссылками */
+}
+
+.current-log-link:hover {
+    text-decoration: underline;
+}

@@ -2,21 +2,15 @@
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
-    <a href="/">Вернуться на главную страницу</a>
     <title>Просмотр файла лога</title>
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
-    <style>
-        pre {
-            white-space: pre-wrap;       /* CSS3 */
-            white-space: -moz-pre-wrap; /* Firefox */
-            white-space: -pre-wrap;     /* Opera <7 */
-            white-space: -o-pre-wrap;   /* Opera 7 */
-            word-wrap: break-word;      /* IE */
-        }
-    </style>
 </head>
 <body>
     <h1>Просмотр файла лога</h1>
+    <div class="link-container">
+        <a href="/">Вернуться на главную страницу</a>
+        <a href="/view_log" class="current-log-link">Текущий лог</a>
+    </div>
     {% if current_log_file %}
         <h2>Текущий лог: {{ current_log_file }}</h2>
     {% endif %}
