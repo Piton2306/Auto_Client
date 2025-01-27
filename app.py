@@ -1,8 +1,6 @@
 import time
-
 import cx_Oracle  # pip install cx-Oracle
 from flask import Flask, request, render_template, g, jsonify
-
 import configparser
 import ctypes
 import datetime
@@ -70,12 +68,38 @@ data.set('SYSTEM_DATA', 'log_file_counter', f'{log_file_counter}')
 with open('data/data.data', 'w') as configfile:
     data.write(configfile)
 
+# Настройка пула соединений
+pool = cx_Oracle.SessionPool(
+    user=config['CONN_PARAM']['schemaname'],
+    password=config['CONN_PARAM']['password'],
+    dsn=config['CONN_PARAM']['servername'],
+    min=2,
+    max=5,
+    increment=1,
+    threaded=True,
+    getmode=cx_Oracle.SPOOL_ATTRVAL_WAIT,
+    encoding='utf-8'
+)
+
+# Декоратор для переподключения
+def reconnect(func):
+    def wrapper(*args, **kwargs):
+        try:
+            return func(*args, **kwargs)
+        except cx_Oracle.DatabaseError as e:
+            error, = e.args
+            if error.code == 1080:  # DPI-1080
+                g.logger.error("Connection was closed. Reconnecting...")
+                kwargs['connection'] = pool.acquire()
+                return func(*args, **kwargs)
+            else:
+                raise
+    return wrapper
 
 @app.before_request
 def before_request():
     g.user_ip = request.remote_addr
     g.log_file_name, g.logger = setup_logging(log_file_date, log_file_counter, real_date, g.user_ip)
-
 
 @app.route('/')
 def index():
@@ -95,7 +119,6 @@ def index():
                            default_schemaName=schemaName, default_password=password, default_serverName=serverName,
                            default_id_group_card=id_group_card, default_AgreeType=AgreeType)
 
-
 @app.route('/create_client', methods=['POST'], endpoint='create_client_route')
 def create_client():
     schemaName = request.form.get('schemaName')
@@ -112,14 +135,16 @@ def create_client():
         f'Получены данные для создания клиента: имя схемы={schemaName}, пароль={password}, имя сервера={serverName}, ID группы карт={id_group_card}, тип соглашения={AgreeType}')
 
     # Подключение к базе данных с использованием новых параметров
-    connection = cx_Oracle.connect(schemaName, password, serverName, encoding='utf-8')
+    connection = pool.acquire()
+    try:
+        new_clid = client_add(connection, id_group_card, AgreeType)
+    finally:
+        pool.release(connection)
 
-    new_clid = client_add(connection, id_group_card, AgreeType)
     if new_clid:
         return f'Создан новый клиент с CLID = {new_clid}'
     else:
         return 'Ошибка при создании клиента', 500
-
 
 @app.route('/create_agreement', methods=['POST'])
 def create_agreement():
@@ -138,17 +163,24 @@ def create_agreement():
         return 'Ошибка: Не все поля заполнены', 400
 
     # Подключение к базе данных с использованием новых параметров
-    connection = cx_Oracle.connect(schemaName, password, serverName, encoding='utf-8')
+    connection = pool.acquire()
+    try:
+        new_agid = agree_add(connection, clid, id_group_card, AgreeType)
+    finally:
+        pool.release(connection)
 
-    new_agid = agree_add(connection, clid, id_group_card, AgreeType)
     if new_agid:
-        # Получение данных клиента для отображения
-        client_data = get_client_data(connection, clid)
+        # Подключение к базе данных для получения данных клиента
+        connection = pool.acquire()
+        try:
+            client_data = get_client_data(connection, clid)
+        finally:
+            pool.release(connection)
+
         return render_template('agreement_created.html', agid=new_agid[0], card_number=new_agid[1],
                                client_data=client_data)
     else:
         return 'Ошибка при создании договора', 500
-
 
 def get_client_data(connection, clid):
     """
@@ -174,7 +206,6 @@ def get_client_data(connection, clid):
     else:
         return None
 
-
 def get_log_content(log_file_name):
     """
     Получает содержимое лог-файла.
@@ -188,12 +219,10 @@ def get_log_content(log_file_name):
     except Exception as e:
         return f"Ошибка при чтении файла лога: {e}"
 
-
 @app.route('/open_log')
 def open_log():
     opening_log_file()
     return 'Файл лога открыт'
-
 
 @app.route('/view_log')
 def view_log():
@@ -204,7 +233,6 @@ def view_log():
         return render_template('view_log.html', log_content=log_content)
     except Exception as e:
         return f"Ошибка при чтении файла лога: {e}"
-
 
 @app.route('/update_config', methods=['POST'], endpoint='update_config_route')
 def update_config():
@@ -223,7 +251,7 @@ def update_config():
 
     return jsonify(success=True)
 
-
+@reconnect
 def execut_query_to_db(connection, sql: str):
     """
     Выполняет SQL-запрос и возвращает результат.
@@ -231,13 +259,16 @@ def execut_query_to_db(connection, sql: str):
     :param sql: строка, содержащая запрос
     :return: список строк
     """
+    if connection is None or not connection.ping():
+        connection = pool.acquire()
     cursor = connection.cursor()
     cursor.execute(sql)
     fetch = cursor.fetchall()
     cursor.close()
+    pool.release(connection)
     return fetch
 
-
+@reconnect
 def execut_query_to_db_no_fetch(connection, sql):
     """
     Выполняет SQL-запрос без возврата результата.
@@ -245,10 +276,12 @@ def execut_query_to_db_no_fetch(connection, sql):
     :param sql: строка, содержащая запрос
     :return: None
     """
+    if connection is None or not connection.ping():
+        connection = pool.acquire()
     cursor = connection.cursor()
     cursor.execute(sql)
     cursor.close()
-
+    pool.release(connection)
 
 def unique_inn() -> int:
     """
@@ -260,10 +293,9 @@ def unique_inn() -> int:
         sql = f'''
             select N31CLID from n31 where n31cinn = '{inn}'
             '''
-        result = execut_query_to_db(connection, sql)
+        result = execut_query_to_db(None, sql)
         if not result:
             return inn
-
 
 def unique_passport_data() -> list:
     """
@@ -276,10 +308,9 @@ def unique_passport_data() -> list:
         sql = f'''
                 select N37CLID from n37 where N37DCTP = 1 and N37PSER = '{pass_ser}' and N37PNUM = '{pass_num}'
             '''
-        result = execut_query_to_db(connection, sql)
+        result = execut_query_to_db(None, sql)
         if not result:
             return [pass_ser, pass_num]
-
 
 def client_add(connection, id_group_card, AgreeType) -> int:
     """
@@ -335,7 +366,6 @@ def client_add(connection, id_group_card, AgreeType) -> int:
     except Exception as err:
         g.logger.error(f'Произошла ошибка, смотрите логи, пробуйте снова. guid сообщения - {guid}. Ошибка: {err}')
 
-
 def agree_add(connection, clid, id_group_card, AgreeType) -> list:
     """
     Создается договор для указанного клиента.
@@ -388,7 +418,6 @@ def agree_add(connection, clid, id_group_card, AgreeType) -> list:
         g.logger.error(f'guid сообщения - {guid}')
         g.logger.error(f'Ошибка: {err}')
 
-
 def write_to_file(file_name, date, clid, agid, card_number):
     """
     Записывает данные в файл.
@@ -402,7 +431,6 @@ def write_to_file(file_name, date, clid, agid, card_number):
     with open(file_name, 'a') as file:
         file.write(f'{date};{clid};{agid};{card_number}\n')
 
-
 def opening_log_file():
     """
     Открытие текущего лог файла.
@@ -410,7 +438,6 @@ def opening_log_file():
     """
     g.logger.info(f'Открыт файл "{g.log_file_name}"')
     os.startfile(f'log\\{g.log_file_name}')
-
 
 def return_fio_on_clid(connection, clid: str) -> str:
     """
@@ -433,7 +460,6 @@ def return_fio_on_clid(connection, clid: str) -> str:
         g.logger.error(f'Ошибка при получении ФИО по ID клиента {clid}: {err}')
         return f'ERROR ошибка при получении ФИО'
 
-
 def return_name_id_group_card(connection) -> str:
     """
     Функция возвращает текстовое значение группы типовых параметров карт.
@@ -446,7 +472,6 @@ def return_name_id_group_card(connection) -> str:
         g.logger.error(f'Несуществующий ID группы типовых параметров карт ({id_group_card}) в ini файле')
         g.logger.error(f'Ошибка: {err}')
         return f'ERROR несуществующий ID группы'
-
 
 def return_name_id_agree_type(connection) -> str:
     """
@@ -461,27 +486,15 @@ def return_name_id_agree_type(connection) -> str:
         g.logger.error(f'Ошибка: {err}')
         return f'ERROR несуществующий ID банковского продукта'
 
-
 if __name__ == '__main__':
     with app.app_context():
-        connection = None
         try:
-            schemaName = config['CONN_PARAM']['schemaname']
-            password = config['CONN_PARAM']['password']
-            serverName = config['CONN_PARAM']['servername']
-            connection = cx_Oracle.connect(
-                schemaName,
-                password,
-                serverName,
-                encoding='utf-8')
-            logging.info(f'Подключено к {schemaName}@{serverName} (Oracle Database - {connection.version})')
-            with app.app_context():
-                g.user_ip = '127.0.0.1'  # Используем локальный IP для инициализации
-                g.log_file_name, g.logger = setup_logging(log_file_date, log_file_counter, real_date, g.user_ip)
-                g.logger.info(f'Пишется файл лога - "{g.log_file_name}"')
-                g.logger.info(f'Банковский продукт - "{return_name_id_agree_type(connection)}" (ID = {AgreeType})')
-                g.logger.info(f'Группа карт - "{return_name_id_group_card(connection)}" (ID = {id_group_card})')
-                g.logger.info(f'Последний клиент - {return_fio_on_clid(connection, last_clid)} CLID = {last_clid}')
+            g.user_ip = '127.0.0.1'  # Используем локальный IP для инициализации
+            g.log_file_name, g.logger = setup_logging(log_file_date, log_file_counter, real_date, g.user_ip)
+            g.logger.info(f'Пишется файл лога - "{g.log_file_name}"')
+            g.logger.info(f'Банковский продукт - "{return_name_id_agree_type(pool.acquire())}" (ID = {AgreeType})')
+            g.logger.info(f'Группа карт - "{return_name_id_group_card(pool.acquire())}" (ID = {id_group_card})')
+            g.logger.info(f'Последний клиент - {return_fio_on_clid(pool.acquire(), last_clid)} CLID = {last_clid}')
         except cx_Oracle.Error as error:
             logging.error(f'Ошибка подключения: {error}')
         else:
