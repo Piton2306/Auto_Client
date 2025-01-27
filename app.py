@@ -1,6 +1,8 @@
 import time
+
 import cx_Oracle  # pip install cx-Oracle
 from flask import Flask, request, render_template, g, jsonify
+
 import configparser
 import ctypes
 import datetime
@@ -81,6 +83,7 @@ pool = cx_Oracle.SessionPool(
     encoding='utf-8'
 )
 
+
 # Декоратор для переподключения
 def reconnect(func):
     def wrapper(*args, **kwargs):
@@ -94,12 +97,15 @@ def reconnect(func):
                 return func(*args, **kwargs)
             else:
                 raise
+
     return wrapper
+
 
 @app.before_request
 def before_request():
     g.user_ip = request.remote_addr
     g.log_file_name, g.logger = setup_logging(log_file_date, log_file_counter, real_date, g.user_ip)
+
 
 @app.route('/')
 def index():
@@ -118,6 +124,7 @@ def index():
                            id_group_card=id_group_card, AgreeType=AgreeType, log_file_name=g.log_file_name,
                            default_schemaName=schemaName, default_password=password, default_serverName=serverName,
                            default_id_group_card=id_group_card, default_AgreeType=AgreeType)
+
 
 @app.route('/create_client', methods=['POST'], endpoint='create_client_route')
 def create_client():
@@ -145,6 +152,7 @@ def create_client():
         return f'Создан новый клиент с CLID = {new_clid}'
     else:
         return 'Ошибка при создании клиента', 500
+
 
 @app.route('/create_agreement', methods=['POST'])
 def create_agreement():
@@ -182,6 +190,7 @@ def create_agreement():
     else:
         return 'Ошибка при создании договора', 500
 
+
 def get_client_data(connection, clid):
     """
     Получает данные клиента по CLID.
@@ -206,6 +215,7 @@ def get_client_data(connection, clid):
     else:
         return None
 
+
 def get_log_content(log_file_name):
     """
     Получает содержимое лог-файла.
@@ -219,10 +229,12 @@ def get_log_content(log_file_name):
     except Exception as e:
         return f"Ошибка при чтении файла лога: {e}"
 
+
 @app.route('/open_log')
 def open_log():
     opening_log_file()
     return 'Файл лога открыт'
+
 
 @app.route('/view_log')
 def view_log():
@@ -233,6 +245,7 @@ def view_log():
         return render_template('view_log.html', log_content=log_content)
     except Exception as e:
         return f"Ошибка при чтении файла лога: {e}"
+
 
 @app.route('/update_config', methods=['POST'], endpoint='update_config_route')
 def update_config():
@@ -251,6 +264,7 @@ def update_config():
 
     return jsonify(success=True)
 
+
 @reconnect
 def execut_query_to_db(connection, sql: str):
     """
@@ -268,6 +282,7 @@ def execut_query_to_db(connection, sql: str):
     pool.release(connection)
     return fetch
 
+
 @reconnect
 def execut_query_to_db_no_fetch(connection, sql):
     """
@@ -283,6 +298,7 @@ def execut_query_to_db_no_fetch(connection, sql):
     cursor.close()
     pool.release(connection)
 
+
 def unique_inn() -> int:
     """
     Функция возвращает уникальное значение ИНН.
@@ -296,6 +312,7 @@ def unique_inn() -> int:
         result = execut_query_to_db(None, sql)
         if not result:
             return inn
+
 
 def unique_passport_data() -> list:
     """
@@ -311,6 +328,7 @@ def unique_passport_data() -> list:
         result = execut_query_to_db(None, sql)
         if not result:
             return [pass_ser, pass_num]
+
 
 def client_add(connection, id_group_card, AgreeType) -> int:
     """
@@ -332,7 +350,7 @@ def client_add(connection, id_group_card, AgreeType) -> int:
     PNUM = pasportData[1]
     PSER = pasportData[0]
 
-    BITH = f'{datetime.date(random.randint(1980, 2001), random.randint(1, 12), random.randint(1, 28))}'
+    BITH = f'{datetime.date(random.randint(1980, 1995), random.randint(1, 12), random.randint(1, 28))}'
     CINN = unique_inn()
 
     TVAL = str(random.randint(0, 999_99_99)).rjust(7, "0")
@@ -365,6 +383,7 @@ def client_add(connection, id_group_card, AgreeType) -> int:
         return clid
     except Exception as err:
         g.logger.error(f'Произошла ошибка, смотрите логи, пробуйте снова. guid сообщения - {guid}. Ошибка: {err}')
+
 
 def agree_add(connection, clid, id_group_card, AgreeType) -> list:
     """
@@ -418,6 +437,7 @@ def agree_add(connection, clid, id_group_card, AgreeType) -> list:
         g.logger.error(f'guid сообщения - {guid}')
         g.logger.error(f'Ошибка: {err}')
 
+
 def write_to_file(file_name, date, clid, agid, card_number):
     """
     Записывает данные в файл.
@@ -431,6 +451,7 @@ def write_to_file(file_name, date, clid, agid, card_number):
     with open(file_name, 'a') as file:
         file.write(f'{date};{clid};{agid};{card_number}\n')
 
+
 def opening_log_file():
     """
     Открытие текущего лог файла.
@@ -438,6 +459,7 @@ def opening_log_file():
     """
     g.logger.info(f'Открыт файл "{g.log_file_name}"')
     os.startfile(f'log\\{g.log_file_name}')
+
 
 def return_fio_on_clid(connection, clid: str) -> str:
     """
@@ -460,6 +482,7 @@ def return_fio_on_clid(connection, clid: str) -> str:
         g.logger.error(f'Ошибка при получении ФИО по ID клиента {clid}: {err}')
         return f'ERROR ошибка при получении ФИО'
 
+
 def return_name_id_group_card(connection) -> str:
     """
     Функция возвращает текстовое значение группы типовых параметров карт.
@@ -472,6 +495,7 @@ def return_name_id_group_card(connection) -> str:
         g.logger.error(f'Несуществующий ID группы типовых параметров карт ({id_group_card}) в ini файле')
         g.logger.error(f'Ошибка: {err}')
         return f'ERROR несуществующий ID группы'
+
 
 def return_name_id_agree_type(connection) -> str:
     """
@@ -486,6 +510,7 @@ def return_name_id_agree_type(connection) -> str:
         g.logger.error(f'Ошибка: {err}')
         return f'ERROR несуществующий ID банковского продукта'
 
+
 if __name__ == '__main__':
     with app.app_context():
         try:
@@ -498,6 +523,6 @@ if __name__ == '__main__':
         except cx_Oracle.Error as error:
             logging.error(f'Ошибка подключения: {error}')
         else:
-            app.run(host='0.0.0.0', port=5000)
+            app.run(host='0.0.0.0', port=5001)
 
         logging.info('Исполнение программы завершено')
