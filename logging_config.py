@@ -1,9 +1,17 @@
 import logging
 import os
+import datetime
 
 def setup_logging(log_file_date, log_file_counter, real_date, user_ip):
+    today_date = datetime.datetime.now().strftime('%Y%m%d')
+    log_directory = os.path.join('log', today_date)
+
+    # Создаем папку для логов, если она не существует
+    if not os.path.exists(log_directory):
+        os.makedirs(log_directory)
+
     log_file_name = f'{real_date}_{user_ip}_{log_file_counter.rjust(5, "0")}.txt'
-    log_file_path = os.path.join('log', log_file_name)
+    log_file_path = os.path.join(log_directory, log_file_name)
 
     # Создаем логгер
     logger = logging.getLogger()

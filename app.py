@@ -232,13 +232,28 @@ def get_log_content(log_file_name):
 
 @app.route('/open_log')
 def open_log():
-    opening_log_file()
+    today_date = datetime.datetime.now().strftime('%Y%m%d')
+    log_directory = os.path.join('log', today_date)
+    log_file_path = os.path.join(log_directory, g.log_file_name)
+    opening_log_file(log_file_path)
     return 'Файл лога открыт'
+
+
+def opening_log_file(log_file_path):
+    """
+    Открытие текущего лог файла.
+    :return: None
+    """
+    g.logger.info(f'Открыт файл "{log_file_path}"')
+    os.startfile(log_file_path)
 
 
 @app.route('/view_log')
 def view_log():
-    log_file_path = os.path.join('log', g.log_file_name)
+    today_date = datetime.datetime.now().strftime('%Y%m%d')
+    log_directory = os.path.join('log', today_date)
+    log_file_path = os.path.join(log_directory, g.log_file_name)
+
     try:
         with open(log_file_path, 'r', encoding='utf-8', errors='replace') as log_file:
             log_content = log_file.read()
