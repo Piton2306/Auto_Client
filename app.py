@@ -249,7 +249,6 @@ def opening_log_file(log_file_path):
 
 
 @app.route('/view_log')
-@app.route('/view_log')
 def view_log():
     # Получаем текущую дату в формате YYYYMMDD
     today_date = datetime.datetime.now().strftime('%Y%m%d')
@@ -304,14 +303,14 @@ def view_log_by_date(date, log_file):
 
     try:
         # Открываем файл лога и читаем его содержимое
-        with open(log_file_path, 'r', encoding='utf-8', errors='replace') as log_file:
-            log_content = log_file.read()
+        with open(log_file_path, 'r', encoding='utf-8', errors='replace') as log_file_content:
+            log_content = log_file_content.read()
         # Возвращаем содержимое лога и имя файла лога в шаблон
-        return render_template('view_log.html', log_content=log_content, log_files=get_all_log_files_for_ip(g.user_ip), current_log_file=log_file)
+        return render_template('view_log.html', log_content=log_content, log_files=get_all_log_files_for_ip(g.user_ip),
+                               current_log_file=log_file)
     except Exception as e:
         # Возвращаем сообщение об ошибке, если не удалось прочитать файл лога
         return f"Ошибка при чтении файла лога: {e}"
-
 
 
 @app.route('/update_config', methods=['POST'], endpoint='update_config_route')
@@ -590,6 +589,6 @@ if __name__ == '__main__':
         except cx_Oracle.Error as error:
             logging.error(f'Ошибка подключения: {error}')
         else:
-            app.run(host='0.0.0.0', port=5001)
+            app.run(host='0.0.0.0', port=5002)
 
         logging.info('Исполнение программы завершено')
