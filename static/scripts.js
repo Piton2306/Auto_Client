@@ -6,20 +6,8 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('id_group_card').value = localStorage.getItem('id_group_card') || '{{ default_id_group_card }}';
     document.getElementById('AgreeType').value = localStorage.getItem('AgreeType') || '{{ default_AgreeType }}';
 
-    // Обновление отображаемых параметров
-    document.getElementById('displaySchemaName').innerText = localStorage.getItem('schemaName') || '{{ default_schemaName }}';
-    document.getElementById('displayServerName').innerText = localStorage.getItem('serverName') || '{{ default_serverName }}';
-    document.getElementById('displayIdGroupCard').innerText = localStorage.getItem('id_group_card') || '{{ default_id_group_card }}';
-    document.getElementById('displayAgreeType').innerText = localStorage.getItem('AgreeType') || '{{ default_AgreeType }}';
-
     // Обновление скрытых полей в формах
-    document.getElementById('schemaNameHidden').value = localStorage.getItem('schemaName') || '{{ default_schemaName }}';
-    document.getElementById('passwordHidden').value = localStorage.getItem('password') || '{{ default_password }}';
-    document.getElementById('serverNameHidden').value = localStorage.getItem('serverName') || '{{ default_serverName }}';
-    document.getElementById('id_group_card_hidden_client').value = localStorage.getItem('id_group_card') || '{{ default_id_group_card }}';
-    document.getElementById('AgreeType_hidden_client').value = localStorage.getItem('AgreeType') || '{{ default_AgreeType }}';
-    document.getElementById('id_group_card_hidden_agreement').value = localStorage.getItem('id_group_card') || '{{ default_id_group_card }}';
-    document.getElementById('AgreeType_hidden_agreement').value = localStorage.getItem('AgreeType') || '{{ default_AgreeType }}';
+    updateHiddenFields();
 });
 
 function updateConfig(fromForm = false) {
@@ -36,20 +24,8 @@ function updateConfig(fromForm = false) {
     localStorage.setItem('id_group_card', id_group_card);
     localStorage.setItem('AgreeType', AgreeType);
 
-    // Обновление отображаемых параметров
-    document.getElementById('displaySchemaName').innerText = schemaName;
-    document.getElementById('displayServerName').innerText = serverName;
-    document.getElementById('displayIdGroupCard').innerText = id_group_card;
-    document.getElementById('displayAgreeType').innerText = AgreeType;
-
     // Обновление скрытых полей в формах
-    document.getElementById('schemaNameHidden').value = schemaName;
-    document.getElementById('passwordHidden').value = password;
-    document.getElementById('serverNameHidden').value = serverName;
-    document.getElementById('id_group_card_hidden_client').value = id_group_card;
-    document.getElementById('AgreeType_hidden_client').value = AgreeType;
-    document.getElementById('id_group_card_hidden_agreement').value = id_group_card;
-    document.getElementById('AgreeType_hidden_agreement').value = AgreeType;
+    updateHiddenFields();
 
     if (!fromForm) {
         // Отправка данных на сервер для логирования
@@ -80,19 +56,21 @@ function updateConfig(fromForm = false) {
     }
 }
 
-function fillHiddenFields(event) {
-    event.preventDefault();
+function updateHiddenFields() {
     var schemaName = localStorage.getItem('schemaName') || document.getElementById('schemaName').value;
     var password = localStorage.getItem('password') || document.getElementById('password').value;
     var serverName = localStorage.getItem('serverName') || document.getElementById('serverName').value;
     var id_group_card = localStorage.getItem('id_group_card') || document.getElementById('id_group_card').value;
     var AgreeType = localStorage.getItem('AgreeType') || document.getElementById('AgreeType').value;
 
+    document.getElementById('schemaNameHidden').value = schemaName;
+    document.getElementById('passwordHidden').value = password;
+    document.getElementById('serverNameHidden').value = serverName;
+    document.getElementById('id_group_card_hidden_client').value = id_group_card;
+    document.getElementById('AgreeType_hidden_client').value = AgreeType;
     document.getElementById('schemaNameHiddenAgreement').value = schemaName;
     document.getElementById('passwordHiddenAgreement').value = password;
     document.getElementById('serverNameHiddenAgreement').value = serverName;
     document.getElementById('id_group_card_hidden_agreement').value = id_group_card;
     document.getElementById('AgreeType_hidden_agreement').value = AgreeType;
-
-    event.target.submit();
 }

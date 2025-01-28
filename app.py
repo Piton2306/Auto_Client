@@ -142,11 +142,11 @@ def create_client():
         f'Получены данные для создания клиента: имя схемы={schemaName}, пароль={password}, имя сервера={serverName}, ID группы карт={id_group_card}, тип соглашения={AgreeType}')
 
     # Подключение к базе данных с использованием новых параметров
-    connection = pool.acquire()
+    connection = cx_Oracle.connect(user=schemaName, password=password, dsn=serverName, encoding='utf-8')
     try:
         new_clid = client_add(connection, id_group_card, AgreeType)
     finally:
-        pool.release(connection)
+        connection.close()
 
     if new_clid:
         return f'Создан новый клиент с CLID = {new_clid}'
@@ -171,19 +171,19 @@ def create_agreement():
         return 'Ошибка: Не все поля заполнены', 400
 
     # Подключение к базе данных с использованием новых параметров
-    connection = pool.acquire()
+    connection = cx_Oracle.connect(user=schemaName, password=password, dsn=serverName, encoding='utf-8')
     try:
         new_agid = agree_add(connection, clid, id_group_card, AgreeType)
     finally:
-        pool.release(connection)
+        connection.close()
 
     if new_agid:
         # Подключение к базе данных для получения данных клиента
-        connection = pool.acquire()
+        connection = cx_Oracle.connect(user=schemaName, password=password, dsn=serverName, encoding='utf-8')
         try:
             client_data = get_client_data(connection, clid)
         finally:
-            pool.release(connection)
+            connection.close()
 
         return render_template('agreement_created.html', agid=new_agid[0], card_number=new_agid[1],
                                client_data=client_data)

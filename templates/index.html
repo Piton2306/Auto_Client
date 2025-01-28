@@ -3,46 +3,59 @@
 <head>
     <meta charset="UTF-8">
     <title>Создание клиентов и договоров</title>
+    <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
     <script src="{{ url_for('static', filename='scripts.js') }}"></script>
 </head>
-<body>
-    <h1>Создание клиентов и договоров</h1>
-    <p><strong>Имя схемы (по умолчанию: {{ default_schemaName }}):</strong> <span id="displaySchemaName">{{ default_schemaName }}</span></p>
-    <p><strong>Имя сервера (по умолчанию: {{ default_serverName }}):</strong> <span id="displayServerName">{{ default_serverName }}</span></p>
-    <p><strong>ID группы карт (по умолчанию: {{ default_id_group_card }}):</strong> <span id="displayIdGroupCard">{{ default_id_group_card }}</span></p>
-    <p><strong>Тип соглашения (по умолчанию: {{ default_AgreeType }}):</strong> <span id="displayAgreeType">{{ default_AgreeType }}</span></p>
-    <form onsubmit="event.preventDefault(); updateConfig();">
-        <label for="schemaName">Имя схемы (по умолчанию: {{ default_schemaName }}):</label>
-        <input type="text" id="schemaName" name="schemaName" value="{{ default_schemaName }}" required>
-        <label for="password">Пароль (по умолчанию: {{ default_password }}):</label>
-        <input type="password" id="password" name="password" value="{{ default_password }}" required>
-        <label for="serverName">Имя сервера (по умолчанию: {{ default_serverName }}):</label>
-        <input type="text" id="serverName" name="serverName" value="{{ default_serverName }}" required>
-        <label for="id_group_card">ID группы карт (по умолчанию: {{ default_id_group_card }}):</label>
-        <input type="text" id="id_group_card" name="id_group_card" value="{{ default_id_group_card }}" required>
-        <label for="AgreeType">Тип соглашения (по умолчанию: {{ default_AgreeType }}):</label>
-        <input type="text" id="AgreeType" name="AgreeType" value="{{ default_AgreeType }}" required>
-    </form>
-    <form action="/create_client" method="post" onsubmit="updateConfig();">
-        <input type="hidden" id="schemaNameHidden" name="schemaName" value="{{ default_schemaName }}">
-        <input type="hidden" id="passwordHidden" name="password" value="{{ default_password }}">
-        <input type="hidden" id="serverNameHidden" name="serverName" value="{{ default_serverName }}">
-        <input type="hidden" id="id_group_card_hidden_client" name="id_group_card" value="{{ default_id_group_card }}">
-        <input type="hidden" id="AgreeType_hidden_client" name="AgreeType" value="{{ default_AgreeType }}">
-        <button type="submit">Создать нового клиента</button>
-    </form>
-    <form action="/create_agreement" method="post" onsubmit="updateConfig(); fillHiddenFields(event);">
-        <label for="clid">ID клиента:</label>
-        <input type="text" id="clid" name="clid" required>
-        <input type="hidden" id="schemaNameHiddenAgreement" name="schemaName">
-        <input type="hidden" id="passwordHiddenAgreement" name="password">
-        <input type="hidden" id="serverNameHiddenAgreement" name="serverName">
-        <input type="hidden" id="id_group_card_hidden_agreement" name="id_group_card">
-        <input type="hidden" id="AgreeType_hidden_agreement" name="AgreeType">
-        <button type="submit">Создать договор</button>
-    </form>
-    <button onclick="refreshPage()">Обновить страницу</button>
-    <a href="/view_log">Открыть файл лога</a>
+<body class="bg-dark text-light">
+    <div class="container mt-5">
+        <h1 class="mb-4 text-center text-info">Создание клиентов и договоров</h1>
+        <form onsubmit="event.preventDefault(); updateConfig();">
+            <div class="form-group">
+                <label for="schemaName" class="text-light">Имя схемы (по умолчанию: {{ default_schemaName }}):</label>
+                <input type="text" class="form-control bg-dark text-light" id="schemaName" name="schemaName" value="{{ default_schemaName }}" required>
+            </div>
+            <div class="form-group">
+                <label for="password" class="text-light">Пароль (по умолчанию: {{ default_password }}):</label>
+                <input type="password" class="form-control bg-dark text-light" id="password" name="password" value="{{ default_password }}" required>
+            </div>
+            <div class="form-group">
+                <label for="serverName" class="text-light">Имя сервера (по умолчанию: {{ default_serverName }}):</label>
+                <input type="text" class="form-control bg-dark text-light" id="serverName" name="serverName" value="{{ default_serverName }}" required>
+            </div>
+            <div class="form-group">
+                <label for="id_group_card" class="text-light">ID группы карт (по умолчанию: {{ default_id_group_card }}):</label>
+                <input type="text" class="form-control bg-dark text-light" id="id_group_card" name="id_group_card" value="{{ default_id_group_card }}" required>
+            </div>
+            <div class="form-group">
+                <label for="AgreeType" class="text-light">Тип соглашения (по умолчанию: {{ default_AgreeType }}):</label>
+                <input type="text" class="form-control bg-dark text-light" id="AgreeType" name="AgreeType" value="{{ default_AgreeType }}" required>
+            </div>
+        </form>
+        <form action="/create_client" method="post" onsubmit="updateConfig(true); updateHiddenFields();">
+            <input type="hidden" id="schemaNameHidden" name="schemaName">
+            <input type="hidden" id="passwordHidden" name="password">
+            <input type="hidden" id="serverNameHidden" name="serverName">
+            <input type="hidden" id="id_group_card_hidden_client" name="id_group_card">
+            <input type="hidden" id="AgreeType_hidden_client" name="AgreeType">
+            <button type="submit" class="btn btn-primary btn-block mt-3">Создать нового клиента</button>
+        </form>
+        <form action="/create_agreement" method="post" onsubmit="updateConfig(true); updateHiddenFields();">
+            <div class="form-group mt-3">
+                <label for="clid" class="text-light">ID клиента:</label>
+                <input type="text" class="form-control bg-dark text-light" id="clid" name="clid" required>
+            </div>
+            <input type="hidden" id="schemaNameHiddenAgreement" name="schemaName">
+            <input type="hidden" id="passwordHiddenAgreement" name="password">
+            <input type="hidden" id="serverNameHiddenAgreement" name="serverName">
+            <input type="hidden" id="id_group_card_hidden_agreement" name="id_group_card">
+            <input type="hidden" id="AgreeType_hidden_agreement" name="AgreeType">
+            <button type="submit" class="btn btn-success btn-block mt-3">Создать договор</button>
+        </form>
+        <button onclick="refreshPage()" class="btn btn-info btn-block mt-3">Обновить страницу</button>
+        <div class="link-container mt-3">
+            <a href="/view_log" class="btn btn-secondary btn-block">Открыть файл лога</a>
+        </div>
+    </div>
 </body>
 </html>
