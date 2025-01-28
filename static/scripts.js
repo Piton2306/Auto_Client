@@ -22,7 +22,7 @@ document.addEventListener('DOMContentLoaded', function() {
     document.getElementById('AgreeType_hidden_agreement').value = localStorage.getItem('AgreeType') || '{{ default_AgreeType }}';
 });
 
-function updateConfig() {
+function updateConfig(fromForm = false) {
     // Сохранение параметров в localStorage
     var schemaName = document.getElementById('schemaName').value;
     var password = document.getElementById('password').value;
@@ -51,31 +51,33 @@ function updateConfig() {
     document.getElementById('id_group_card_hidden_agreement').value = id_group_card;
     document.getElementById('AgreeType_hidden_agreement').value = AgreeType;
 
-    // Отправка данных на сервер для логирования
-    fetch('/update_config', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/x-www-form-urlencoded',
-        },
-        body: new URLSearchParams({
-            schemaName: schemaName,
-            password: password,
-            serverName: serverName,
-            id_group_card: id_group_card,
-            AgreeType: AgreeType
+    if (!fromForm) {
+        // Отправка данных на сервер для логирования
+        fetch('/update_config', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/x-www-form-urlencoded',
+            },
+            body: new URLSearchParams({
+                schemaName: schemaName,
+                password: password,
+                serverName: serverName,
+                id_group_card: id_group_card,
+                AgreeType: AgreeType
+            })
         })
-    })
-    .then(response => response.json())
-    .then(data => {
-        if (data.success) {
-            alert('Параметры подключения успешно обновлены на клиенте и сервере.');
-        } else {
-            alert('Ошибка при обновлении параметров на сервере.');
-        }
-    })
-    .catch((error) => {
-        console.error('Error:', error);
-    });
+        .then(response => response.json())
+        .then(data => {
+            if (data.success) {
+                alert('Параметры подключения успешно обновлены на клиенте и сервере.');
+            } else {
+                alert('Ошибка при обновлении параметров на сервере.');
+            }
+        })
+        .catch((error) => {
+            console.error('Error:', error);
+        });
+    }
 }
 
 function fillHiddenFields(event) {

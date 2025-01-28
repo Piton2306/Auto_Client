@@ -23,9 +23,8 @@
         <input type="text" id="id_group_card" name="id_group_card" value="{{ default_id_group_card }}" required>
         <label for="AgreeType">Тип соглашения (по умолчанию: {{ default_AgreeType }}):</label>
         <input type="text" id="AgreeType" name="AgreeType" value="{{ default_AgreeType }}" required>
-        <button type="submit">Сохранить</button>
     </form>
-    <form action="/create_client" method="post">
+    <form action="/create_client" method="post" onsubmit="updateConfig();">
         <input type="hidden" id="schemaNameHidden" name="schemaName" value="{{ default_schemaName }}">
         <input type="hidden" id="passwordHidden" name="password" value="{{ default_password }}">
         <input type="hidden" id="serverNameHidden" name="serverName" value="{{ default_serverName }}">
@@ -33,7 +32,7 @@
         <input type="hidden" id="AgreeType_hidden_client" name="AgreeType" value="{{ default_AgreeType }}">
         <button type="submit">Создать нового клиента</button>
     </form>
-    <form action="/create_agreement" method="post" onsubmit="fillHiddenFields(event)">
+    <form action="/create_agreement" method="post" onsubmit="updateConfig(); fillHiddenFields(event);">
         <label for="clid">ID клиента:</label>
         <input type="text" id="clid" name="clid" required>
         <input type="hidden" id="schemaNameHiddenAgreement" name="schemaName">
