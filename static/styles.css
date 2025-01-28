@@ -15,9 +15,17 @@ h1 {
 }
 
 .link-container a {
-    margin-right: 10px; /* Установите нужное расстояние между ссылками */
-    color: #007BFF;
+    background-color: #343a40;
+
+    color: #e0e0e0;
+    border: 1px solid #495057;
 }
+.link-container focus {
+    border-color: #17a2b8;
+    box-shadow: 0 0 0 0.2rem rgba(23, 162, 184, 0.25);
+}
+
+
 
 .link-container a:hover {
     text-decoration: underline;
