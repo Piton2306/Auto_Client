@@ -43,7 +43,7 @@
 3. **Установите зависимости:**
 
     ```bash
-    pip install -r requirements.txt
+    pip install -r requirements.txt --proxy http://your_proxy:port
     ```
 
 4. **Настройте параметры подключения к базе данных:**
