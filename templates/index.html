@@ -12,23 +12,23 @@
         <h1 class="mb-4 text-center text-info">Создание клиентов и договоров</h1>
         <form onsubmit="event.preventDefault(); updateConfig();">
             <div class="form-group">
-                <label for="schemaName" class="text-light">Имя схемы (по умолчанию: {{ default_schemaName }}):</label>
+                <label for="schemaName" class="text-light">Имя схемы (По умол.: {{ default_schemaName }}):</label>
                 <input type="text" class="form-control bg-dark text-light" id="schemaName" name="schemaName" value="{{ default_schemaName }}" required>
             </div>
             <div class="form-group">
-                <label for="password" class="text-light">Пароль (по умолчанию: {{ default_password }}):</label>
+                <label for="password" class="text-light">Пароль (По умол.: {{ default_password }}):</label>
                 <input type="password" class="form-control bg-dark text-light" id="password" name="password" value="{{ default_password }}" required>
             </div>
             <div class="form-group">
-                <label for="serverName" class="text-light">Имя сервера (по умолчанию: {{ default_serverName }}):</label>
+                <label for="serverName" class="text-light">Имя сервера (По умол.: {{ default_serverName }}):</label>
                 <input type="text" class="form-control bg-dark text-light" id="serverName" name="serverName" value="{{ default_serverName }}" required>
             </div>
             <div class="form-group">
-                <label for="id_group_card" class="text-light">ID группы карт (по умолчанию: {{ default_id_group_card }}):</label>
+                <label for="id_group_card" class="text-light">ID группы карт (По умол.: {{ default_id_group_card }}):</label>
                 <input type="text" class="form-control bg-dark text-light" id="id_group_card" name="id_group_card" value="{{ default_id_group_card }}" required>
             </div>
             <div class="form-group">
-                <label for="AgreeType" class="text-light">Тип соглашения (по умолчанию: {{ default_AgreeType }}):</label>
+                <label for="AgreeType" class="text-light">Банковский продукт (По умол.: {{ default_AgreeType }}):</label>
                 <input type="text" class="form-control bg-dark text-light" id="AgreeType" name="AgreeType" value="{{ default_AgreeType }}" required>
             </div>
         </form>
