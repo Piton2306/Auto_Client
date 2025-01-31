@@ -8,8 +8,8 @@
 <body>
     <h1>Просмотр файла лога</h1>
     <div class="link-container">
-        <a href="/">Вернуться на главную страницу</a>
-        <a href="/view_log" class="current-log-link">Текущий лог</a>
+        <a href="/" class="btn spaced-link">Вернуться на главную страницу</a>
+        <a href="/view_log" class="btn spaced-link current-log-link">Текущий лог</a>
     </div>
     {% if current_log_file %}
         <h2>Текущий лог: {{ current_log_file }}</h2>

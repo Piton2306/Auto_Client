@@ -14,34 +14,37 @@ h1 {
     margin-bottom: 20px;
 }
 
-.link-container a {
-    background-color: #343a40;
-
-    color: #e0e0e0;
-    border: 1px solid #495057;
-}
-.link-container focus {
-    border-color: #17a2b8;
-    box-shadow: 0 0 0 0.2rem rgba(23, 162, 184, 0.25);
+.link-container .spaced-link {
+    margin-right: 20px; /* Добавляем отступ справа для каждого элемента */
 }
 
-
-
-.link-container a:hover {
-    text-decoration: underline;
+.link-container .spaced-link:last-child {
+    margin-right: 0; /* Убираем отступ для последнего элемента */
 }
 
-.form-control {
-    background-color: #343a40;
-    color: #e0e0e0;
-    border: 1px solid #495057;
+.btn {
+    background-color: #28a745; /* Зеленый фон */
+    color: #fff; /* Белый текст */
+    border: none;
+    padding: 10px 20px;
+    text-decoration: none;
+    border-radius: 5px;
+    transition: background-color 0.3s, transform 0.3s;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
 
-.form-control:focus {
-    border-color: #17a2b8;
-    box-shadow: 0 0 0 0.2rem rgba(23, 162, 184, 0.25);
+.btn:hover {
+    background-color: #218838; /* Темно-зеленый фон при наведении */
+    transform: translateY(-2px);
+    box-shadow: 0 6px 8px rgba(0, 0, 0, 0.2);
 }
 
-.btn-primary, .btn-success, .btn-info, .btn-secondary {
-    border-radius: 5;
+.btn:focus {
+    outline: none;
+}
+
+.btn:active {
+    background-color: #1e7e34; /* Еще более темный зеленый фон при нажатии */
+    transform: translateY(0);
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
