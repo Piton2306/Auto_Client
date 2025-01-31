@@ -149,7 +149,14 @@ def create_client():
         connection.close()
 
     if new_clid:
-        return f'Создан новый клиент с CLID = {new_clid}'
+        # Подключение к базе данных для получения данных клиента
+        connection = cx_Oracle.connect(user=schemaName, password=password, dsn=serverName, encoding='utf-8')
+        try:
+            client_data = get_client_data(connection, new_clid)
+        finally:
+            connection.close()
+
+        return render_template('client_created.html', clid=new_clid, client_data=client_data)
     else:
         return 'Ошибка при создании клиента', 500
 
@@ -199,7 +206,7 @@ def get_client_data(connection, clid):
     :return: словарь с данными клиента
     """
     sql = f'''
-        select N31NAMF, N31NAMI, N31NAMO, N37PSER, N37PNUM from n31
+        select N31NAMF, N31NAMI, N31NAMO, N37PSER, N37PNUM, N31BITH, N31CINN from n31
         join n37 on N31CLID = N37CLID
         where N31CLID = {clid}
     '''
@@ -210,10 +217,14 @@ def get_client_data(connection, clid):
             'first_name': result[0][1],
             'middle_name': result[0][2],
             'passport_series': result[0][3],
-            'passport_number': result[0][4]
+            'passport_number': result[0][4],
+            'birth_date': result[0][5],
+            'inn': result[0][6]
         }
     else:
         return None
+
+
 
 
 def get_log_content(log_file_name):
