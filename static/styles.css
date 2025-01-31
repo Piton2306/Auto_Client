@@ -83,3 +83,36 @@ h1 {
 }
 .password-toggle:hover {
     color: #fff;
+}
+
+/* Стили для кнопки "Создать нового клиента" */
+.btn-primary {
+    background-color: #007bff; /* Синий фон */
+    border-color: #007bff; /* Синяя граница */
+}
+
+.btn-primary:hover {
+    background-color: #0056b3; /* Темно-синий фон при наведении */
+    border-color: #0056b3; /* Темно-синяя граница при наведении */
+}
+
+.btn-primary:active {
+    background-color: #004494; /* Еще более темный синий фон при нажатии */
+    border-color: #004494; /* Еще более темная синяя граница при нажатии */
+}
+
+/* Стили для кнопки "Открыть файл лога" */
+.btn-secondary {
+    background-color: #6c757d; /* Серый фон */
+    border-color: #6c757d; /* Серая граница */
+}
+
+.btn-secondary:hover {
+    background-color: #5a6268; /* Темно-серый фон при наведении */
+    border-color: #5a6268; /* Темно-серая граница при наведении */
+}
+
+.btn-secondary:active {
+    background-color: #494f54; /* Еще более темный серый фон при нажатии */
+    border-color: #494f54; /* Еще более темная серая граница при нажатии */
+}
