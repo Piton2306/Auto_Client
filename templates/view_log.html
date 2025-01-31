@@ -20,7 +20,7 @@
     <ul>
         {% for date, log_file in log_files %}
             <li>
-                <a href="/view_log_by_date/{{ date }}/{{ log_file }}">{{ date }} - {{ log_file }}</a>
+                <a href="/view_log_by_date/{{ date }}/{{ log_file }}" class="log-link">{{ date }} - {{ log_file }}</a>
             </li>
         {% endfor %}
     </ul>

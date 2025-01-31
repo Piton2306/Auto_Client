@@ -48,3 +48,12 @@ h1 {
     transform: translateY(0);
     box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
 }
+
+.log-link {
+    color: #007bff; /* Синий цвет текста */
+    text-decoration: none; /* Убираем подчеркивание */
+}
+
+.log-link:hover {
+    text-decoration: underline; /* Добавляем подчеркивание при наведении */
+}
