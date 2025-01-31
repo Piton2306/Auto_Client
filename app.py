@@ -135,6 +135,7 @@ def create_client():
     AgreeType = request.form.get('AgreeType')
 
     if not all([schemaName, password, serverName, id_group_card, AgreeType]):
+        g.logger.error('Ошибка: Не все поля заполнены')
         return 'Ошибка: Не все поля заполнены', 400
 
     # Логирование данных, полученных от клиента
@@ -142,23 +143,35 @@ def create_client():
         f'Получены данные для создания клиента: имя схемы={schemaName}, пароль={password}, имя сервера={serverName}, ID группы карт={id_group_card}, тип соглашения={AgreeType}')
 
     # Подключение к базе данных с использованием новых параметров
-    connection = cx_Oracle.connect(user=schemaName, password=password, dsn=serverName, encoding='utf-8')
+    try:
+        connection = cx_Oracle.connect(user=schemaName, password=password, dsn=serverName, encoding='utf-8')
+    except cx_Oracle.DatabaseError as e:
+        g.logger.error(f'Ошибка подключения к базе данных: {e}')
+        return f'Ошибка подключения к базе данных: {e}', 500
+
     try:
         new_clid = client_add(connection, id_group_card, AgreeType)
+    except Exception as e:
+        g.logger.error(f'Ошибка при создании клиента: {e}')
+        return f'Ошибка при создании клиента: {e}', 500
     finally:
         connection.close()
 
     if new_clid:
         # Подключение к базе данных для получения данных клиента
-        connection = cx_Oracle.connect(user=schemaName, password=password, dsn=serverName, encoding='utf-8')
         try:
+            connection = cx_Oracle.connect(user=schemaName, password=password, dsn=serverName, encoding='utf-8')
             client_data = get_client_data(connection, new_clid)
+        except cx_Oracle.DatabaseError as e:
+            g.logger.error(f'Ошибка подключения к базе данных для получения данных клиента: {e}')
+            return f'Ошибка подключения к базе данных для получения данных клиента: {e}', 500
         finally:
             connection.close()
 
         return render_template('client_created.html', clid=new_clid, client_data=client_data)
     else:
-        return 'Ошибка при создании клиента', 500
+        g.logger.error('Ошибка при создании клиента: CLID не был создан')
+        return 'Ошибка при создании клиента: CLID не был создан', 500
 
 
 @app.route('/create_agreement', methods=['POST'])
@@ -175,27 +188,40 @@ def create_agreement():
         f'Получены данные для создания договора: CLID={clid}, ID группы карт={id_group_card}, тип соглашения={AgreeType}, имя схемы={schemaName}, пароль={password}, имя сервера={serverName}')
 
     if not all([clid, id_group_card, AgreeType, schemaName, password, serverName]):
+        g.logger.error('Ошибка: Не все поля заполнены')
         return 'Ошибка: Не все поля заполнены', 400
 
     # Подключение к базе данных с использованием новых параметров
-    connection = cx_Oracle.connect(user=schemaName, password=password, dsn=serverName, encoding='utf-8')
+    try:
+        connection = cx_Oracle.connect(user=schemaName, password=password, dsn=serverName, encoding='utf-8')
+    except cx_Oracle.DatabaseError as e:
+        g.logger.error(f'Ошибка подключения к базе данных: {e}')
+        return f'Ошибка подключения к базе данных: {e}', 500
+
     try:
         new_agid = agree_add(connection, clid, id_group_card, AgreeType)
+    except Exception as e:
+        g.logger.error(f'Ошибка при создании договора: {e}')
+        return f'Ошибка при создании договора: {e}', 500
     finally:
         connection.close()
 
     if new_agid:
         # Подключение к базе данных для получения данных клиента
-        connection = cx_Oracle.connect(user=schemaName, password=password, dsn=serverName, encoding='utf-8')
         try:
+            connection = cx_Oracle.connect(user=schemaName, password=password, dsn=serverName, encoding='utf-8')
             client_data = get_client_data(connection, clid)
+        except cx_Oracle.DatabaseError as e:
+            g.logger.error(f'Ошибка подключения к базе данных для получения данных клиента: {e}')
+            return f'Ошибка подключения к базе данных для получения данных клиента: {e}', 500
         finally:
             connection.close()
 
-        return render_template('agreement_created.html', agid=new_agid[0], card_number=new_agid[1],
-                               client_data=client_data)
+        return render_template('agreement_created.html', agid=new_agid[0], card_number=new_agid[1], client_data=client_data)
     else:
-        return 'Ошибка при создании договора', 500
+        g.logger.error('Ошибка при создании договора: AGID не был создан')
+        return 'Ошибка при создании договора: AGID не был создан', 500
+
 
 
 def get_client_data(connection, clid):
@@ -223,8 +249,6 @@ def get_client_data(connection, clid):
         }
     else:
         return None
-
-
 
 
 def get_log_content(log_file_name):
