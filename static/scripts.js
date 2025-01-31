@@ -8,6 +8,18 @@ document.addEventListener('DOMContentLoaded', function() {
 
     // Обновление скрытых полей в формах
     updateHiddenFields();
+
+    // Переключение видимости пароля
+    document.getElementById('togglePassword').addEventListener('click', function() {
+        var passwordInput = document.getElementById('password');
+        if (passwordInput.type === 'password') {
+            passwordInput.type = 'text';
+            this.querySelector('i').classList.replace('fa-eye', 'fa-eye-slash');
+        } else {
+            passwordInput.type = 'password';
+            this.querySelector('i').classList.replace('fa-eye-slash', 'fa-eye');
+        }
+    });
 });
 
 function updateConfig(fromForm = false) {

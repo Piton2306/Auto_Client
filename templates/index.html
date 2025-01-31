@@ -5,7 +5,8 @@
     <title>Создание клиентов и договоров</title>
     <link href="https://stackpath.bootstrapcdn.com/bootstrap/4.5.2/css/bootstrap.min.css" rel="stylesheet">
     <link rel="stylesheet" type="text/css" href="{{ url_for('static', filename='styles.css') }}">
-    <script src="{{ url_for('static', filename='scripts.js') }}"></script>
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/5.15.3/css/all.min.css">
+    <script src="{{ url_for('static', filename='scripts.js') }}" defer></script>
 </head>
 <body class="bg-dark text-light">
     <div class="container mt-5">
@@ -15,9 +16,12 @@
                 <label for="schemaName" class="text-light">Имя схемы (По умол.: {{ default_schemaName }}):</label>
                 <input type="text" class="form-control bg-dark text-light" id="schemaName" name="schemaName" value="{{ default_schemaName }}" required>
             </div>
-            <div class="form-group">
+            <div class="form-group position-relative">
                 <label for="password" class="text-light">Пароль (По умол.: {{ default_password }}):</label>
                 <input type="password" class="form-control bg-dark text-light" id="password" name="password" value="{{ default_password }}" required>
+                <button type="button" class="password-toggle" id="togglePassword">
+                    <i class="fa fa-eye"></i>
+                </button>
             </div>
             <div class="form-group">
                 <label for="serverName" class="text-light">Имя сервера (По умол.: {{ default_serverName }}):</label>
